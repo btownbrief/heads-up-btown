@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Heads Up, Burlington · Btown Games</title>
+  <meta name="description" content="Phone on your forehead, friends shout clues. Six Burlington decks: Church Street, Eat Btown, Very Vermont, charades, the lake, and a newcomer mode. From the BTown Brief." />
+  <meta property="og:title" content="Heads Up, Burlington" />
+  <meta property="og:description" content="The forehead guessing game with Burlington decks. Tilt down for got it, up for pass. A Btown Games production." />
+  <meta property="og:url" content="https://play.btownbrief.com/heads-up-btown/" />
+  <meta property="og:image" content="https://play.btownbrief.com/heads-up-btown/icon-180.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:image" content="https://play.btownbrief.com/heads-up-btown/icon-180.png" />
+  <meta name="theme-color" content="#1b1533" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+<!-- GoatCounter -->
+<script data-goatcounter="https://btown-brief.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+  <!-- ============================================================ HOME -->
+  <section class="screen" id="home">
+    <header>
+      <button class="icon-btn" id="helpBtn" aria-label="How to play">?</button>
+      <h1>HEADS UP, <span>BURLINGTON</span></h1>
+      <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙</button>
+    </header>
+    <p class="tag">Phone on your forehead. Friends shout clues. Tilt down when you get it, up to pass.</p>
+
+    <div class="decks" id="deckGrid" role="list"></div>
+
+    <div class="settings-row" id="settingsRow">
+      <div class="seg" role="group" aria-label="Round length">
+        <button class="seg-btn" data-seconds="60">60s</button>
+        <button class="seg-btn" data-seconds="90">90s</button>
+      </div>
+      <div class="seg" role="group" aria-label="Controls">
+        <button class="seg-btn" data-control="tilt">Tilt</button>
+        <button class="seg-btn" data-control="tap">Tap</button>
+      </div>
+      <button class="seg-btn solo" id="soundBtn" aria-pressed="false">🔇 Sound off</button>
+    </div>
+
+    <footer>
+      A <strong>Btown Games</strong> production · <a href="https://play.btownbrief.com/">More games →</a><br><a href="https://www.btownbrief.com" target="_blank" rel="noopener">Read the BTown Brief →</a>
+    </footer>
+  </section>
+
+  <!-- ============================================================ READY -->
+  <section class="screen hidden" id="ready">
+    <button class="back" id="readyBack" aria-label="Back to decks">‹ Decks</button>
+    <div class="ready-body">
+      <div class="ready-emoji" id="readyEmoji"></div>
+      <h2 id="readyName"></h2>
+      <p class="ready-blurb" id="readyBlurb"></p>
+      <ol class="ready-steps">
+        <li>Hand the phone to the guesser.</li>
+        <li>Tap start, then hold it flat on your forehead, screen facing your friends.</li>
+        <li>They give clues. <b>Tilt down</b> for got it, <b>tilt up</b> to pass.</li>
+      </ol>
+      <p class="ready-note" id="readyNote"></p>
+      <button class="big-btn" id="startBtn">START</button>
+      <p class="fine" id="readyMeta"></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ PLAY -->
+  <section class="screen hidden" id="play">
+    <div class="stage" id="stage">
+      <div class="timer" id="timerBar"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="timer-num" id="timerNum" aria-live="off"></div>
+      <div class="countdown" id="countdown"></div>
+      <div class="card-text" id="cardText" aria-live="polite"></div>
+      <div class="flash" id="flash"></div>
+      <div class="tap-zones" id="tapZones">
+        <button class="zone pass" id="tapPass" aria-label="Pass">PASS</button>
+        <button class="zone got" id="tapGot" aria-label="Got it">GOT IT</button>
+      </div>
+      <button class="quit" id="quitBtn" aria-label="End round">✕</button>
+    </div>
+  </section>
+
+  <!-- ============================================================ RECAP -->
+  <section class="screen hidden" id="recap">
+    <header class="recap-hdr">
+      <div class="recap-deck" id="recapDeck"></div>
+      <div class="recap-score"><b id="recapScore">0</b><small id="recapScoreLabel">got</small></div>
+      <div class="recap-sub" id="recapSub"></div>
+    </header>
+    <div class="recap-lists">
+      <h3 class="got-h">Got it</h3>
+      <ul class="results got" id="gotList"></ul>
+      <h3 class="pass-h">Passed</h3>
+      <ul class="results pass" id="passList"></ul>
+    </div>
+    <div class="recap-btns">
+      <button class="big-btn" id="againBtn">PLAY AGAIN</button>
+      <button class="tab" id="shareBtn">SHARE AS TEXT</button>
+      <button class="tab" id="decksBtn">CHANGE DECK</button>
+    </div>
+    <footer>
+      A <strong>Btown Games</strong> production · <a href="https://play.btownbrief.com/">More games →</a><br><a href="https://www.btownbrief.com" target="_blank" rel="noopener">Read the BTown Brief →</a>
+    </footer>
+  </section>
+
+  <div id="toast" class="hidden" role="status" aria-live="polite"></div>
+
+  <!-- How to play -->
+  <div class="overlay hidden" id="helpOverlay">
+    <div class="modal">
+      <button class="close" data-close>&times;</button>
+      <h2>How to play</h2>
+      <p>One person holds the phone on their forehead, screen out. Everyone else shouts clues. <strong>Tilt the phone down</strong> when you get it, <strong>tilt it up</strong> to pass.</p>
+      <p>Sixty seconds a round (or ninety, in settings). Then a recap of what you got, what you passed, and a one-line "what it is" for every card so the clue-givers can settle the arguments.</p>
+      <p>No tilt sensor? Switch to <strong>Tap</strong>: left side passes, right side is got it.</p>
+      <p><strong>Act It Out</strong> is charades. Friends act, no talking, the phone holder guesses.</p>
+      <p class="fine">Every card comes from real Burlington data: places, dishes, history, and things people here actually do. A production of <a href="https://www.btownbrief.com" target="_blank" rel="noopener">the BTown Brief</a>.</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+<script src="https://play.btownbrief.com/ticker.js" defer></script>
+</body>
+</html>
