@@ -6,6 +6,19 @@ invented, but a handful lean on an outside URL or an inference, and those are th
 ones to eyeball first. Strike anything that doesn't land and it gets cut from the
 JSON (`node scripts/validate-decks.mjs` after).
 
+## Quarantined 2026-09-06 (Astra review)
+
+Nineteen cards whose hint rested on an inference, an outside page, or a scraped
+restaurants.json row were moved out of `data/decks.json` into
+`data/decks-unconfirmed.json`, which the game never loads: Sneakeasy, Cabot cheddar (both
+decks), Korean fried chicken at Donwoori, Onion City Chicken & Oysters, Kismet, Bernie's
+mittens, Darn Tough socks, Flatlander, Leaf peepers, The Green Mountain Boys, Town Meeting
+Day (both decks), Fall foliage, Rí Rá, E.B. Strong's, Dobra Tea, Kru Coffee, Captain Tom's
+Tiki Bar. The decks now hold 354 cards. To bring one back: confirm the fact, move the object
+into its deck in `data/decks.json`, delete it from the quarantine file, run
+`node scripts/validate-decks.mjs` (it refuses a card present in both files). Nectar's and
+the gravy fries stay in: the closure is a verified fact, not an inference.
+
 ## Confirm first
 
 - [ ] **[CONFIRM] The name.** "Heads Up!" is a registered trademark of a commercial

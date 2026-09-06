@@ -2,7 +2,7 @@
 // js/engine.js (pure); sensor plumbing in js/tilt.js; beeps in js/sound.js.
 import {
   buildQueue, createRound, startPlaying, currentCard, timeLeft, tick, mark, summary,
-  shareText, COUNTDOWN_SECONDS, ROUND_LENGTHS, DEFAULT_SECONDS,
+  shareText, COUNTDOWN_SECONDS, ROUND_LENGTHS, DEFAULT_SECONDS, createRotation, nextRotation,
 } from './engine.js';
 import { tiltSupported, needsPermission, requestTilt, listenTilt } from './tilt.js';
 import { setEnabled as setSound, cue } from './sound.js';
@@ -274,6 +274,7 @@ function teardownRound() {
   if (stopTilt) { stopTilt(); stopTilt = null; }
   releaseWakeLock();
   $('stage').classList.remove('rot', 'cw', 'ccw');
+  rot = createRotation(); // the classes are gone, so the state must forget too, or the next round in the same pose never re-rotates
 }
 
 function endRound() {
@@ -295,19 +296,18 @@ function endRound() {
 
 // Rotation-locked phones: if the viewport is portrait but the phone is
 // physically sideways, turn the stage so the words read upright to the table.
-let rotState = '';
+let rot = createRotation();
 function updateRotation(v) {
   const portrait = window.innerHeight >= window.innerWidth;
-  let want = '';
-  if (portrait && Math.abs(v.xUp) > 0.6) want = v.xUp > 0 ? 'cw' : 'ccw';
-  if (want === rotState) return;
-  rotState = want;
+  const r = nextRotation(rot, portrait, v.xUp);
+  rot = r.state;
+  if (!r.changed) return;
   const stage = $('stage');
   stage.classList.remove('rot', 'cw', 'ccw');
-  if (want) {
+  if (r.want) {
     stage.style.setProperty('--w', `${window.innerHeight}px`);
     stage.style.setProperty('--h', `${window.innerWidth}px`);
-    stage.classList.add('rot', want);
+    stage.classList.add('rot', r.want);
   }
   if (round && round.phase === 'playing') renderCard();
 }

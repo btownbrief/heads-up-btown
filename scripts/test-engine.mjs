@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   hashSeed, mulberry32, shuffle, buildQueue, createRound, startPlaying, currentCard,
   timeLeft, tick, mark, summary, shareText, orientationVector, createTiltState, feedTilt, TILT,
+  rotationWanted, createRotation, nextRotation,
 } from '../js/engine.js';
 
 const cards = Array.from({ length: 6 }, (_, i) => ({ id: `c${i}`, t: `Card ${i}`, h: `Hint ${i}` }));
@@ -114,6 +115,22 @@ test('tilt: fires once per dip, needs vertical to re-arm, ignores jitter', () =>
   const up = [];
   for (let i = 0; i < TILT.holdSamples; i++) { ({ state: st, gesture: g } = feedTilt(st, 0.7)); if (g) up.push(g); }
   assert.deepEqual(up, ['pass']);
+});
+
+test('rotation: sideways in portrait rotates, a reset re-rotates the same pose (the Astra bug)', () => {
+  assert.equal(rotationWanted(true, 0.9), 'cw');
+  assert.equal(rotationWanted(true, -0.9), 'ccw');
+  assert.equal(rotationWanted(true, 0.2), '');
+  assert.equal(rotationWanted(false, 0.9), '', 'landscape viewport needs no CSS rotation');
+  let st = createRotation();
+  let r = nextRotation(st, true, 0.9); st = r.state;
+  assert.equal(r.changed, true); assert.equal(r.want, 'cw');
+  r = nextRotation(st, true, 0.95); st = r.state;
+  assert.equal(r.changed, false, 'jitter inside the same pose does not restyle');
+  // round ends: the stage classes are cleared and the state is reset
+  st = createRotation();
+  r = nextRotation(st, true, 0.9);
+  assert.equal(r.changed, true, 'next round in the same pose must rotate again');
 });
 
 console.log(`\n${n} engine tests passed`);

@@ -43,6 +43,12 @@ for (const d of data.decks || []) {
   }
 }
 
+try {
+  const q = JSON.parse(await readFile(path.join(here, '..', 'data', 'decks-unconfirmed.json'), 'utf8'));
+  const shipped = new Set((data.decks || []).flatMap((d) => d.cards.map((c) => c.id)));
+  for (const d of q.decks || []) for (const c of d.cards) if (shipped.has(c.id)) err(`quarantined card ${c.id} is also in decks.json`);
+} catch (e) { if (e.code !== 'ENOENT') err(`decks-unconfirmed.json: ${e.message}`); }
+
 if (errors.length) {
   console.error(`decks.json: ${errors.length} problem(s)`);
   for (const e of errors) console.error(' -', e);

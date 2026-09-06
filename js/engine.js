@@ -155,3 +155,18 @@ export function feedTilt(state, zUp) {
   }
   return { state: { armed, run, runDir }, gesture: null };
 }
+
+// ---- stage rotation (rotation-locked phones held sideways) ----
+// Pure decision + tiny state so main.js cannot forget to reset it between rounds.
+export const ROT = { sideways: 0.6 };
+export function rotationWanted(portrait, xUp) {
+  if (!portrait || Math.abs(xUp) <= ROT.sideways) return '';
+  return xUp > 0 ? 'cw' : 'ccw';
+}
+export function createRotation() { return { want: '' }; }
+/** returns { state, changed, want }; changed is true when the stage must be re-styled */
+export function nextRotation(state, portrait, xUp) {
+  const want = rotationWanted(portrait, xUp);
+  if (want === state.want) return { state, changed: false, want };
+  return { state: { want }, changed: true, want };
+}

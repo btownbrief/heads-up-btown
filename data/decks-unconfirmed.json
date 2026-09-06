@@ -1,0 +1,143 @@
+{
+ "_note": "Cards pulled from data/decks.json on 2026-09-06 after the Astra review: their hint rests on an inference, an outside page, or a scraped restaurants.json row nobody has walked past. Not loaded by the game. To restore one: confirm the fact, move the object back into the same deck in data/decks.json, run node scripts/validate-decks.mjs.",
+ "decks": [
+  {
+   "id": "church",
+   "name": "Church Street & Downtown",
+   "cards": [
+    {
+     "id": "church-036",
+     "t": "Rí Rá",
+     "h": "The Irish pub at 123 Church Street.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "church-059",
+     "t": "E.B. Strong's",
+     "h": "The prime steakhouse at 10 Church Street.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "church-066",
+     "t": "Dobra Tea",
+     "h": "The tea house at 80 Church Street.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "church-067",
+     "t": "Kru Coffee",
+     "h": "The coffee shop at 2 Church Street, at the top of the bricks.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "church-068",
+     "t": "Captain Tom's Tiki Bar",
+     "h": "The tiki bar hidden behind Ken's Pizza on Bank Street.",
+     "s": "restaurants.json"
+    }
+   ]
+  },
+  {
+   "id": "eat",
+   "name": "Eat Btown",
+   "cards": [
+    {
+     "id": "eat-057",
+     "t": "Cabot cheddar",
+     "h": "Vermont's cooperative cheddar; a Franklin County processing hub supplied it and Ben & Jerry's.",
+     "s": "archive:2026-06-22"
+    },
+    {
+     "id": "eat-063",
+     "t": "Korean fried chicken at Donwoori",
+     "h": "Modern Korean in Winooski from siblings Summer and Khoi Cao.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "eat-064",
+     "t": "Sneakeasy",
+     "h": "The upstairs cocktail lounge Sneakers Bistro opened in August 2026.",
+     "s": "openings.json"
+    },
+    {
+     "id": "eat-068",
+     "t": "Onion City Chicken & Oysters",
+     "h": "The Winooski farm-to-table room on East Allen Street.",
+     "s": "restaurants.json"
+    },
+    {
+     "id": "eat-069",
+     "t": "Kismet",
+     "h": "Turkish-Mediterranean grill on Battery Street, opened August 2024.",
+     "s": "restaurants.json"
+    }
+   ]
+  },
+  {
+   "id": "vermont",
+   "name": "Very Vermont",
+   "cards": [
+    {
+     "id": "vermont-007",
+     "t": "Town Meeting Day",
+     "h": "The March day Vermont towns vote in person; the deadline for boiling sap.",
+     "s": "hobbies.json"
+    },
+    {
+     "id": "vermont-009",
+     "t": "Bernie's mittens",
+     "h": "The wool mittens Bernie Sanders wore at the 2021 inauguration, made in Essex Junction. Instant meme.",
+     "s": "https://en.wikipedia.org/wiki/Bernie_Sanders_mittens_meme"
+    },
+    {
+     "id": "vermont-014",
+     "t": "The Green Mountain Boys",
+     "h": "Ethan Allen's militia, and still the name of Vermont's National Guard.",
+     "s": "archive:2026-01-05"
+    },
+    {
+     "id": "vermont-015",
+     "t": "Flatlander",
+     "h": "What Vermonters call anyone from away. Also a Btown Party game about blending in.",
+     "s": "https://play.btownbrief.com/btown-party/"
+    },
+    {
+     "id": "vermont-016",
+     "t": "Leaf peepers",
+     "h": "The fall visitors who came for the foliage. Vermont's tourism ad writes itself.",
+     "s": "party-content/twoheads-prompts.json"
+    },
+    {
+     "id": "vermont-024",
+     "t": "Cabot cheddar",
+     "h": "Vermont's cooperative cheddar brand.",
+     "s": "archive:2026-06-22"
+    },
+    {
+     "id": "vermont-025",
+     "t": "Darn Tough socks",
+     "h": "Vermont socks with a lifetime warranty; the warranty pop-up sets up at Patagonia Burlington.",
+     "s": "archive:2026-04-17"
+    }
+   ]
+  },
+  {
+   "id": "newcomer",
+   "name": "Newcomer Mode",
+   "cards": [
+    {
+     "id": "newcomer-025",
+     "t": "Fall foliage",
+     "h": "The leaf peepers come for it every October.",
+     "s": "party-content/twoheads-prompts.json"
+    },
+    {
+     "id": "newcomer-045",
+     "t": "Town Meeting Day",
+     "h": "The March day towns vote in person.",
+     "s": "hobbies.json"
+    }
+   ]
+  }
+ ]
+}
