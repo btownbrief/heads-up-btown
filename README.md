@@ -14,6 +14,12 @@ npm run check
 
 Development serves `http://localhost:5197`. On a real phone, serve over HTTPS for motion permission, service workers, and wake lock. Tap and keyboard gameplay work without sensors. Open Settings → Enable & test tilt on the phone before using it on your forehead.
 
+## Interface
+
+Three main tabs: **Decks**, **Challenges**, and **My Decks**. Tap a deck to select it; the information icon opens a preview. The single Play button opens a compact setup with mode, time, and clue style. Player/group settings and advanced house rules expand when needed. Challenges open one path at a time. Custom decks use a list with separate creation and editing screens. Quick rounds finish with replay/done actions on the recap, without a duplicate finale.
+
+The interface uses system typography, restrained colors, clear primary/secondary controls, and touch-friendly spacing. No promotional panels, external news ticker, or account flow. All game modes, decks, saved groups, custom content, and challenge progress are preserved.
+
 ## The game
 
 - 60 curated decks: 30 local and 30 general. 3,234 card entries, **2,932 distinct answers** after cross-deck canonicalization. 38 credited local photo cards and 290 distinct answers with hand-authored forbidden clues. Counts are measured, not estimated.
@@ -34,7 +40,7 @@ Development serves `http://localhost:5197`. On a real phone, serve over HTTPS fo
 
 ## Controls
 
-Tap Pass / Got it; arrow left / right; Space or Escape pauses; Space resumes. N moves to the next clue-giver in One Clue Each. On supported phones, screen down = correct, up = pass, then return upright. Three selectable thresholds with a time-based hold and neutral rearming prevent sustained tilt or momentary nods from repeatedly firing. Sound starts off. Haptics are feature-detected.
+Tap Pass / Correct; arrow left / right; Space or Escape pauses; Space resumes. N moves to the next clue-giver in One Clue Each. On supported phones, screen down = correct, up = pass, then return upright. Three selectable thresholds with a time-based hold and neutral rearming prevent sustained tilt or momentary nods from repeatedly firing. Sound starts off. Haptics are feature-detected.
 
 ## Files and ownership
 
@@ -61,4 +67,4 @@ The app feature-detects browser capabilities. See [MDN service worker lifecycle]
 
 GitHub Pages publishes only `dist/` after tests and validation pass on `main`. Source snapshots in `data/`, authoring scripts, and internal verification notes are not included in the Pages artifact. The earlier six-deck app remains in Git history before this release. `data/decks.json` and the quarantined source cards remain as authoring inputs, checked separately by `scripts/validate-source-decks.mjs`. The game never reads those snapshots at runtime.
 
-The Arcade entry is in `btownbrief/btownbrief.github.io/games.json`; network search metadata is in `search-index.json`; the described HUB tile is in `btownbrief/hub/index.html`. Keep the public URL stable. The network ticker is hidden in both the round and room-display views.
+The Arcade entry is in `btownbrief/btownbrief.github.io/games.json`; network search metadata is in `search-index.json`; the described HUB tile is in `btownbrief/hub/index.html`. Keep the public URL stable. The news ticker is intentionally omitted. Settings contains the HUB link, help, offline save, and room display.

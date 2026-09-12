@@ -51,8 +51,8 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
-      // Images and fonts are stable; prefer cached copies. Documents and code refresh online.
-      if (/\.(png|jpg|svg|ttf)$/.test(url.pathname)) {
+      // Card images and fonts are stable; the app icon and shell refresh online.
+      if (/\.(png|jpg|svg|ttf)$/.test(url.pathname) && !url.pathname.endsWith("/assets/icon.svg")) {
         const cached = await cache.match(event.request, { ignoreSearch: true });
         if (cached) return cached;
       }

@@ -43,3 +43,20 @@ The final import audit found that unrecognized difficulty names silently default
 The public release uses the existing `play.btownbrief.com/heads-up-btown/` path and publishes only `dist/`. The original six-deck source snapshot still validates (354 cards), the 60-deck runtime validates, and all 28 engine/progression tests pass. The public hosting route has no Sites audience gateway.
 
 At 390 × 844 in the in-app browser, played a fresh 30-second tap round through countdown, correct, pass, natural time up, passed-card reveal, and the share-text dialog. The recap showed one correct, one pass, and the expected one-point total. The body stayed 390 pixels wide; the network ticker was hidden during play and returned for the recap. Browser error logs were empty. This is browser acceptance, not physical sensor verification.
+
+## Simplified interface — September 12, 2026
+
+Replaced the promotional home panels and four-section navigation with three tabs, compact deck selection, and one Play action. Setup uses grouped select rows and expandable advanced settings; challenges open one path at a time; custom decks have separate list and editing views. Quick play ends at its recap. The external news ticker is removed, with the HUB link available in Settings. All 60 decks, 30 local categories, 36 levels, game modes, and existing device-local data remain supported.
+
+Manually checked the redesigned interface in the in-app browser at desktop width, 390 × 844, 320 × 740, and 844 × 390 landscape:
+
+- Played a natural 30-second quick round through correct, pass, time up, reveal, score correction, sharing, and Done. Correcting the pass updated the total and shared text from one to two.
+- Completed a quick round, returned to setup, and changed to Teams. Both previously named players and their teams remained intact.
+- Created and reloaded a six-card custom deck with difficulties and forbidden clues. Opened its self-contained share link and verified all six cards were staged for review in the editor.
+- Earned a challenge star, reloaded, and verified the best score, star, next-level unlock, and later locked level persisted.
+- Played both turns of a two-player Forbidden Words team session, including a clue challenge and a final 1–1 tie. The answer, forbidden clues, timer, and controls fit at 320 pixels.
+- Saved all 59 offline files, stopped the local server, confirmed connection refusal, and reloaded the redesigned app. Restored a saved cooperative photo session, displayed cached photographs, scored and paused a round, and completed the session while the server remained off.
+- Verified whole-card deck selection, removal from the selected-decks sheet, setup controls, recap review, and the Settings sheets. The room-display link points to the same-origin display page, which was opened explicitly and rendered successfully; the in-app browser did not expose a new tab from its target-blank link.
+- Browser error logs were empty. Body width matched the viewport in narrow portrait and landscape checks. Physical motion and sensor acceptance remain separate, as above.
+
+The final validation includes all 28 engine/progression tests, the source and runtime deck validators, all tracked JavaScript syntax checks, and a clean whitespace check. No gameplay engine or card-content changes were needed for this redesign.
