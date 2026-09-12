@@ -7,6 +7,12 @@ export const esc = (v) =>
       ],
   );
 const paths = {
+  chevron: '<path d="m9 5 7 7-7 7"/>',
+  minus: '<path d="M5 12h14"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.01"/>',
+  lock: '<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  star: '<path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9Z"/>',
+
   cards:
     '<rect x="5" y="4" width="14" height="17" rx="3"/><path d="m5 17-2-1V4a2 2 0 0 1 2-2h10M10 10h4m-2-2v4"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',

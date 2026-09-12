@@ -19,8 +19,10 @@ import { esc, ic, toast, modal, closeModal, button, option } from "./ui.js";
 const root = document.querySelector("#app");
 const state = loadState();
 let screen = "library",
-  filter = state.filter || "all",
+  filter = ["all", "local", "party", "pop", "family"].includes(state.filter) ? state.filter : "all",
   query = "",
+  activeChapter = null,
+  editorOpen = false,
   customEdit = null,
   customDraft = { name: "", text: "" };
 let countdownUntil = 0,
@@ -54,7 +56,7 @@ const RULES = {
   one: {
     name: "One Clue Each",
     emoji: "☝️",
-    hint: "One clue per person, clockwise. Tap Next clue-giver or Skip me to keep it moving.",
+    hint: "One clue per person, clockwise. Use Next / skip to keep it moving.",
   },
   forbidden: {
     name: "Forbidden Words",
@@ -124,173 +126,78 @@ function fresh(config = state.setup, ids = state.selected) {
   );
 }
 function header() {
-  return `<header class="site-header"><a class="brand" href="./" data-home="true"><b class="brand-mark">h!</b><span>heads up, <em>btown!</em></span></a><div class="header-links"><span class="small muted">A LITTLE LOCAL. A LOT OF LOUD.</span><button class="text-button" data-action="help">How to play</button><button class="icon-button" aria-label="Settings" data-action="settings">${ic("settings")}</button></div></header>`;
+  return `<header class="site-header"><a class="brand" href="./" data-home="true"><span class="brand-mark">${ic("cards")}</span>Heads Up<span class="brand-place">Btown</span></a><button class="icon-button" aria-label="Settings" data-action="settings">${ic("settings")}</button></header>`;
 }
 function nav() {
   return `<nav class="nav" aria-label="Game sections">${[
-    ["library", "cards", "The deck shelf"],
-    ["custom", "plus", "Your own decks"],
-    ["setup", "users", "Game night"],
-    ["levels", "fresh", "Challenge trail"],
-  ]
-    .map(
-      ([s, i, l]) =>
-        `<button class="${screen === s ? "active" : ""}" data-action="${s}">${ic(i)}${l}</button>`,
-    )
-    .join("")}</nav>`;
-}
-function footer() {
-  return `<footer class="site-footer"><span>Made for good company. <a href="https://hub.btownbrief.com/">Back to the HUB</a></span><span class="footer-actions"><button class="text-button" data-action="offline">${offlineStatus === "ready" ? "Available offline" : offlineStatus === "saving" ? "Saving for offline…" : "Offline play"}</button><button class="text-button" data-action="credits">The little details ↗</button></span></footer>`;
+    ["library", "cards", "Decks"], ["levels", "trophy", "Challenges"], ["custom", "edit", "My Decks"],
+  ].map(([s, i, label]) => `<button class="${screen === s ? "active" : ""}" data-action="${s}" ${screen === s ? 'aria-current="page"' : ""}>${ic(i)}<span>${label}</span></button>`).join("")}</nav>`;
 }
 function render() {
-  const openDetails = [...document.querySelectorAll("details[open]")]
-    .map((el) => el.className)
-    .filter(Boolean);
-  document.body.classList.toggle(
-    "in-round",
-    ["ready", "countdown", "playing", "paused"].includes(screen),
-  );
+  const active = document.activeElement;
+  const focusSelector = !document.querySelector("#modal").open && active?.closest("#app")
+    ? active.id ? "#" + CSS.escape(active.id)
+    : active.dataset.toggle ? `[data-toggle="${CSS.escape(active.dataset.toggle)}"]`
+    : active.dataset.filter ? `[data-filter="${CSS.escape(active.dataset.filter)}"]` : null
+    : null;
+  const openDetails = [...document.querySelectorAll("details[open]")].map(el => el.className).filter(Boolean);
+  const inRound = ["ready", "countdown", "playing", "paused"].includes(screen);
+  document.body.classList.toggle("in-round", inRound);
   document.body.classList.toggle("room-mode", isRoom);
-  if (window.BtownTicker) {
-    if (document.body.classList.contains("in-round") || isRoom) window.BtownTicker.hide();
-    else window.BtownTicker.show();
-  }
-  if (isRoom) {
-    renderRoom(lastRoom);
-    return;
-  }
-  if (["ready", "countdown", "playing", "paused"].includes(screen)) {
-    root.innerHTML = roundView();
-    return;
-  }
-  root.innerHTML =
-    header() +
-    `<main class="shell" id="main">${["library", "custom", "setup", "levels"].includes(screen) ? nav() : ""}${screen === "levels" ? levelsView() : screen === "library" ? library() : screen === "setup" ? setupView() : screen === "custom" ? customView() : screen === "recap" ? recapView() : finishView()}${footer()}</main>`;
+  document.body.dataset.screen = screen;
+  if (isRoom) { renderRoom(lastRoom); return; }
+  if (inRound) { root.innerHTML = roundView(); return; }
+  const showNav = ["library", "custom", "levels"].includes(screen);
+  root.innerHTML = header() + `<main class="shell ${showNav ? 'has-tabs' : ''}" id="main" tabindex="-1">${screen === "levels" ? levelsView() : screen === "library" ? library() : screen === "setup" ? setupView() : screen === "custom" ? customView() : screen === "recap" ? recapView() : finishView()}</main>${showNav ? nav() : ""}`;
   for (const name of openDetails) {
     const el = document.getElementsByClassName(name)[0];
     if (el?.tagName === "DETAILS") el.open = true;
   }
+  if (focusSelector) document.querySelector(focusSelector)?.focus({preventScroll:true});
   broadcast();
 }
 function goto(s) {
   screen = s;
   render();
   window.scrollTo(0, 0);
+  document.querySelector("#main")?.focus({preventScroll:true});
 }
 function library() {
-  const total = E.uniqueCards(allDecks().flatMap((d) => d.cards)).length;
-  return `${state.session ? `<div class="resume-banner">${ic("play")}<div><b>Your game night is saved.</b><span>${esc(state.session.group)} · ${state.session.turn + 1} of ${state.session.schedule.length} turns</span></div>${button("Continue game", "resume-session", "dark")}</div>` : ""}<section class="library-intro"><div><div class="eyebrow">THE PHONE-ON-YOUR-FOREHEAD KIND OF FUN</div><h1>Your people. Wild guesses.</h1><p>${allDecks().length} decks. ${total.toLocaleString()} different answers. Zero awkward icebreakers.</p></div><div class="fresh-note">${ic("fresh")}<span><b>Fresh cards for your crowd.</b><br>We remember what you've played.</span></div></section><section class="feature-row"><article class="feature"><div class="feature-copy"><span class="pill">✦ THE HOMETOWN COLLECTION</span><h2>You've got the<br>home advantage.</h2><p>From Church Street to creemees.<br>How Burlington are you, really?</p><button class="button" data-action="locals">Explore ${builtins.filter((d) => d.group === "local").length} local decks ${ic("arrow")}</button></div><img class="feature-art" src="./assets/burlington.png" alt="A playful illustrated Burlington waterfront, with Champ in the lake" width="1536" height="1024"></article><article class="feature secondary"><div class="feature-copy"><span class="pill">THE WHOLE ROOM'S INVITED</span><h2>Make a night of it.</h2><p>Teams, rotating players, inside jokes.<br>One very good reason to put your phone up.</p><button class="button" data-action="setup">Set up game night ${ic("arrow")}</button></div></article></section><div class="catalog-layout"><section class="catalog"><div class="catalog-tools"><h2>Find your next favorite.</h2><label class="searchbox">${ic("search")}<input type="search" id="search" aria-label="Search decks" placeholder="Find a deck or card…" value="${esc(query)}"></label></div><div class="filter-row">${[
-    ["all", "All decks"],
-    ["local", "📍 Burlington & VT"],
-    ["party", "Party starters"],
-    ["pop", "Pop culture"],
-    ["family", "Family night"],
-    ["custom", "Made by you"],
-  ]
-    .map(
-      ([id, l]) =>
-        `<button class="chip ${filter === id ? "active" : ""}" aria-pressed="${filter === id}" data-filter="${id}">${l}</button>`,
-    )
-    .join(
-      "",
-    )}</div><div class="deck-grid" id="deck-grid">${cardsHTML()}</div><div class="catalog-bottom">${ic("heart")}<div><b class="small">The best deck? Your inside jokes.</b><p>Turn your group chat, family lore, or favorite coworkers into a deck.</p></div><button class="text-button" data-action="custom" aria-label="Create your own deck">${ic("arrow")}</button></div></section>${selectionPanel()}</div>`;
+  return `<section class="page-heading"><div><h1>Decks</h1><p>Pick one. Or mix a few.</p></div><span class="quiet-count">${allDecks().length} decks · 30 local</span></section>${state.session && !state.session.finished ? `<button class="resume-banner" data-action="resume-session">${ic("play")}<span><b>Continue your game</b><small>${esc(state.session.group)} · Turn ${state.session.turn + 1} of ${state.session.schedule.length}</small></span>${ic("chevron")}</button>` : ""}<section class="catalog" aria-label="Choose decks"><label class="searchbox">${ic("search")}<input type="search" id="search" aria-label="Search decks" placeholder="Search decks or answers" value="${esc(query)}"></label><div class="filter-row" aria-label="Deck categories">${[
+    ["all", "All"], ["local", "Local"], ["party", "Party"], ["pop", "Pop culture"], ["family", "Family"],
+  ].map(([id,label]) => `<button class="chip ${filter === id ? 'active' : ''}" aria-pressed="${filter === id}" data-filter="${id}">${label}</button>`).join("")}</div><div class="deck-grid" id="deck-grid">${cardsHTML()}</div></section>${selectionPanel()}`;
 }
 function cardsHTML() {
-  return (
-    allDecks()
-      .filter(
-        (d) =>
-          (filter === "all" || d.group === filter) &&
-          (!query ||
-            `${d.name} ${d.blurb} ${d.cards.map((c) => c.t).join(" ")}`
-              .toLowerCase()
-              .includes(query.toLowerCase())),
-      )
-      .map((d) => {
-        const n = E.uniqueCards(d.cards).filter(
-          (c) => !Object.hasOwn(seen(), E.cardKey(c)),
-        ).length;
-        return `<article class="deck-card ${state.selected.includes(d.id) ? "selected" : ""}" style="--cover:${d.color}"><button class="deck-cover" data-preview="${d.id}" aria-label="Preview ${esc(d.name)}">${d.cover ? `<img src="./${d.cover}" alt="" loading="lazy" width="300" height="170">` : `<span class="deck-emoji" aria-hidden="true">${d.emoji}</span>`}<span class="cover-label">${d.photo ? "PHOTO DECK" : d.group === "local" ? "LOCAL FAVORITE" : d.group === "custom" ? "MADE BY YOU" : d.group === "pop" ? "POP CULTURE" : d.group.toUpperCase()}</span></button><div class="deck-info"><h3>${esc(d.name)}</h3><p>${esc(d.blurb)}</p><div class="deck-foot"><span>${d.cards.length} cards · ${n === d.cards.length ? d.level : `${n} fresh`}</span><button class="add-deck" data-toggle="${d.id}" aria-pressed="${state.selected.includes(d.id)}" aria-label="${state.selected.includes(d.id) ? "Remove" : "Add"} ${esc(d.name)}">${ic(state.selected.includes(d.id) ? "check" : "plus")}</button></div></div></article>`;
-      })
-      .join("") ||
-    '<div class="empty"><h3>No decks found.</h3><p>Try another search or choose All decks.</p></div>'
-  );
+  return allDecks().filter(d => (filter === "all" || d.group === filter) && (!query || `${d.name} ${d.blurb} ${d.cards.map(c => c.t).join(" ")}`.toLowerCase().includes(query.toLowerCase()))).map(d => {
+    const selected = state.selected.includes(d.id);
+    return `<article class="deck-card ${selected ? 'selected' : ''}" style="--cover:${d.color}"><button class="deck-select" data-toggle="${d.id}" aria-pressed="${selected}" aria-label="${selected ? 'Remove' : 'Add'} ${esc(d.name)}"><span class="deck-cover">${d.cover ? `<img src="./${d.cover}" alt="" loading="lazy" width="300" height="170">` : `<span class="deck-emoji" aria-hidden="true">${d.emoji}</span>`}<span class="selection-check">${ic(selected ? "check" : "plus")}</span>${d.group === 'local' ? '<span class="local-label">LOCAL</span>' : ''}</span><span class="deck-info"><span class="deck-title">${esc(d.name)}</span><span class="deck-meta">${d.cards.length} ${d.photo ? 'photo cards' : 'cards'}</span></span></button><button class="deck-detail" data-preview="${d.id}" aria-label="Preview ${esc(d.name)}">${ic("info")}</button></article>`;
+  }).join("") || '<div class="empty"><h2>No decks found</h2><p>Try another search or category.</p></div>';
 }
 function selectionPanel() {
   const selected = state.selected.map(deckById).filter(Boolean);
-  const n = E.uniqueCards(selected.flatMap((d) => d.cards)).length;
-  return `<aside class="session-panel"><div class="eyebrow">GOOD COMPANY, GREAT GUESSES</div><h3>Your game, mixed.</h3><p class="description">Add a few decks. We'll shuffle them into one very good time.</p><ul class="selection-list">${selected.length ? selected.map((d) => `<li><span class="selection-icon">${d.emoji}</span>${esc(d.name)}<button class="remove" data-toggle="${d.id}" aria-label="Remove ${esc(d.name)} from your mix">×</button></li>`).join("") : '<li class="muted">Tap + on a deck to add it.</li>'}</ul><div class="panel-meta"><span>${selected.length} deck${selected.length === 1 ? "" : "s"} selected</span><b>${n.toLocaleString()} answers</b></div><button class="button full" data-action="play" ${!selected.length ? "disabled" : ""}>Let's play ${ic("arrow")}</button><p class="panel-note">No accounts. No paywalls. Just play.</p></aside>`;
+  return `<aside class="play-dock" aria-label="Your selected decks"><div class="play-dock-inner"><button class="mix-summary" data-action="selected-decks" ${selected.length ? '' : 'disabled'}><span class="mini-deck-stack">${ic("cards")}</span><span><b>${selected.length ? `${selected.length} deck${selected.length === 1 ? '' : 's'} selected` : 'Choose a deck'}</b><small>${selected.length ? 'View your mix' : 'Tap a card to add it'}</small></span>${selected.length ? ic("chevron") : ''}</button><button class="button" data-action="play" ${selected.length ? '' : 'disabled'}>Play ${ic("play")}</button></div></aside>`;
+}
+function selectedDecks() {
+  const decks = state.selected.map(deckById).filter(Boolean);
+  modal("Your mix", `<div class="grouped-list">${decks.map(d => `<div class="mix-row"><span class="row-emoji" style="--cover:${d.color}">${d.emoji}</span><button class="row-copy" data-preview="${d.id}"><b>${esc(d.name)}</b><small>${d.cards.length} cards</small></button><button class="icon-button" data-mix-remove="${d.id}" aria-label="Remove ${esc(d.name)}">${ic("minus")}</button></div>`).join("") || '<p class="empty">Choose a deck to get started.</p>'}</div><p class="footnote">Answers are remembered for ${esc(state.group)}. No repeats until you choose a new cycle.</p>`,button("Done", "close-modal"));
 }
 function previewDeck(id) {
   const d = deckById(id);
   if (!d) return;
-  const freshN = d.cards.filter(
-    (c) => !Object.hasOwn(seen(), E.cardKey(c)),
-  ).length;
-  modal(
-    d.emoji + " " + d.name,
-    `<p>${esc(d.blurb)}</p><div class="preview-stats"><b>${d.cards.length}<span>cards</span></b><b>${freshN}<span>fresh for your group</span></b><b>${d.cards.filter((c) => c.ban).length}<span>forbidden prompts</span></b></div>${d.rule ? `<p class="callout">${esc(RULES[d.rule].hint)}</p>` : ""}<p class="eyebrow">A TASTE OF THE DECK · THESE ARE PREVIEWS</p><div class="sample-cards">${d.cards
-      .slice(0, 6)
-      .map((c) => `<span>${esc(c.t)}</span>`)
-      .join(
-        "",
-      )}</div><p class="small muted">Previewing cards doesn't mark them as played. During a round, each answer is remembered across all decks for “${esc(state.group)}”.</p>`,
-    `<button class="button" data-only="${d.id}">Play this deck ${ic("arrow")}</button><button class="button outline" data-modal-toggle="${d.id}">${state.selected.includes(id) ? "Remove from mix" : "Add to my mix"}</button>`,
-  );
+  const n = E.uniqueCards(d.cards).filter(c => !Object.hasOwn(seen(), E.cardKey(c))).length;
+  modal(d.name, `<div class="preview-cover" style="--cover:${d.color}">${d.cover ? `<img src="./${d.cover}" alt="">` : d.emoji}</div><p>${esc(d.blurb)}</p><p class="footnote">${d.cards.length} cards · ${n} fresh for ${esc(state.group)}</p>${d.rule ? `<p class="callout">${esc(RULES[d.rule].hint)}</p>` : ''}<details class="preview-examples"><summary>Preview answers ${ic("chevron")}</summary><div class="sample-cards">${d.cards.slice(0,6).map(c => `<span>${esc(c.t)}</span>`).join("")}</div><p class="footnote">Previewing doesn't mark these cards as played.</p></details>`, `<button class="button" data-only="${d.id}">Play this deck</button><button class="button secondary" data-modal-toggle="${d.id}">${state.selected.includes(id) ? 'Remove from mix' : 'Add to mix'}</button>`);
+}
+function groupField() {
+  return `<label class="field"><span>Group name</span><input id="group-name" value="${esc(state.group)}" maxlength="40" list="group-names" placeholder="The usual crowd"></label><datalist id="group-names">${Object.values(state.groups).map(g => `<option value="${esc(g.name)}"></option>`).join("")}</datalist><p class="footnote">Each group keeps its own card history and challenge progress on this device.</p>`;
+}
+function playersFields() {
+  const s = state.setup;
+  return `${s.mode === 'teams' ? `<div class="two-fields">${s.teamNames.map((name,i) => `<label class="field"><span>Team ${i ? 'B' : 'A'}</span><input data-team-name="${i}" value="${esc(name)}" maxlength="28"></label>`).join("")}</div>` : ''}<div class="players-list">${(s.mode === 'quick' ? s.players.slice(0,1) : s.players).map((p,i) => `<div class="player-line"><span class="avatar ${p.team === 'B' ? 'alternate' : ''}">${i+1}</span><label class="player-name"><span class="sr-only">Player ${i+1} name</span><input data-player-name="${p.id}" value="${esc(p.name)}" maxlength="25" placeholder="Player ${i+1}"></label>${s.mode === 'teams' ? `<select aria-label="Team for player ${i+1}" data-player-team="${p.id}">${option('A','A',p.team)}${option('B','B',p.team)}</select>` : ''}<button class="icon-button" data-player-options="${p.id}" aria-label="Adjustments for player ${i+1}">${ic('settings')}</button>${s.mode !== 'quick' && s.players.length > 2 ? `<button class="icon-button" data-remove-player="${p.id}" aria-label="Remove player ${i+1}">${ic('minus')}</button>` : ''}${p.extra || p.difficulty !== 'inherit' ? `<small class="player-adjustment">${p.extra ? `+${p.extra}s` : ''} ${p.difficulty !== 'inherit' ? ['', 'Easy', 'Medium', 'Hard'][+p.difficulty] : ''}</small>` : ''}</div>`).join("")}</div>${s.mode !== 'quick' ? `<button class="text-button add-person" data-action="add-player" ${s.players.length >= 16 ? 'disabled' : ''}>${ic('plus')} Add player</button>` : ''}`;
 }
 function setupView() {
-  const s = state.setup,
-    n = fresh().length,
-    all = available().length;
-  return `<section class="page-heading"><button class="text-button" data-action="library">${ic("back")} Back to the shelf</button><div class="eyebrow">LET'S MAKE A NIGHT OF IT</div><h1>A little setup. A lot of fun.</h1><p class="muted">Your people, your pace, your house rules.</p></section><div class="setup-layout"><div class="setup-main"><section class="form-section"><div class="section-heading"><span class="step">01</span><h2>Who's playing?</h2></div><div class="mode-grid">${[
-    ["quick", "⚡", "Quick play", "One round. Straight to the good bit."],
-    [
-      "individual",
-      "🙌",
-      "Everyone for themselves",
-      "Rotate guessers. Keep the scores.",
-    ],
-    ["teams", "🤝", "Team night", "Two teams. Friendly rivalry."],
-    ["coop", "💚", "All together", "One shared target. Everybody wins."],
-  ]
-    .map(
-      ([v, e, n, h]) =>
-        `<button class="mode-card ${s.mode === v ? "active" : ""}" data-mode="${v}" aria-pressed="${s.mode === v}"><span>${e}</span><b>${n}</b><small>${h}</small></button>`,
-    )
-    .join(
-      "",
-    )}</div><label class="field group-field"><span>Remember fresh cards for</span><input id="group-name" value="${esc(state.group)}" maxlength="40" list="group-names" placeholder="e.g. Friday night friends"><small>Reuse this group name next time. Your card history stays on this device.</small></label><datalist id="group-names">${Object.values(
-    state.groups,
-  )
-    .map((g) => `<option value="${esc(g.name)}"></option>`)
-    .join(
-      "",
-    )}</datalist>${s.mode === "teams" ? `<div class="two-fields">${s.teamNames.map((name, i) => `<label class="field"><span>Team ${i ? "B" : "A"}</span><input data-team-name="${i}" value="${esc(name)}" maxlength="28"></label>`).join("")}</div>` : ""}<div class="players-header"><b>${s.mode === "quick" ? "Who's guessing?" : "The guest list"}</b>${s.mode !== "quick" ? `<span class="small muted">${s.players.length}/16 players</span>` : ""}</div><div class="players-list">${(s.mode === "quick" ? s.players.slice(0, 1) : s.players).map((p, i) => `<div class="player-line"><span class="avatar ${p.team === "B" ? "alternate" : ""}">${i + 1}</span><label class="player-name"><span class="sr-only">Player ${i + 1} name</span><input data-player-name="${p.id}" value="${esc(p.name)}" placeholder="Player ${i + 1}" maxlength="25"></label>${s.mode === "teams" ? `<select aria-label="Team for player ${i + 1}" data-player-team="${p.id}">${option("A", "Team A", p.team)}${option("B", "Team B", p.team)}</select>` : ""}<button class="icon-button" data-player-options="${p.id}" aria-label="Adjustments for player ${i + 1}">${ic("settings")}</button>${s.mode !== "quick" && s.players.length > 2 ? `<button class="text-button" data-remove-player="${p.id}" aria-label="Remove player ${i + 1}">${ic("close")}</button>` : ""}${p.extra || p.difficulty !== "inherit" ? `<small class="player-adjustment">${p.extra ? `+${p.extra} sec` : ""} ${p.difficulty !== "inherit" ? ["", "Easy", "Medium", "Hard"][+p.difficulty] + " cards" : ""}</small>` : ""}</div>`).join("")}</div>${s.mode !== "quick" ? `<button class="button outline" data-action="add-player" ${s.players.length >= 16 ? "disabled" : ""}>${ic("plus")} Add a person</button>` : ""}</section><section class="form-section"><div class="section-heading"><span class="step">02</span><h2>Set the rhythm.</h2></div><div class="three-fields"><label class="field"><span>Round length</span><select id="seconds">${[30, 60, 90, 120].map((v) => option(v, `${v} seconds`, s.seconds)).join("")}</select></label><label class="field"><span>Difficulty</span><select id="difficulty">${[
-    ["mixed", "A little of everything"],
-    ["1", "Easy · familiar favorites"],
-    ["2", "Medium · a good challenge"],
-    ["3", "Hard · deep cuts"],
-    ["ramp", "Build from easy to hard"],
-  ]
-    .map(([v, l]) => option(v, l, s.difficulty))
-    .join(
-      "",
-    )}</select></label>${s.mode !== "quick" ? `<label class="field"><span>${s.mode === "teams" ? "Laps through both teams" : "Turns per player"}</span><select id="rounds">${[1, 2, 3, 4, 5].map((v) => option(v, v, s.rounds)).join("")}</select></label>` : `<label class="field"><span>Controls</span><select id="control">${option("tap", "Tap / keyboard", state.settings.control)}${option("tilt", "Tilt + tap backup", state.settings.control)}</select></label>`}</div>${s.mode === "coop" ? `<label class="field"><span>Shared target</span><select id="target">${[10, 20, 30, 40, 50, 60, 75, 100].map((v) => option(v, `${v} correct answers`, s.target)).join("")}</select></label><p class="callout">Each person gets a turn, then passes the phone while the clock is stopped. All correct answers count toward the same target.</p>` : ""}${s.mode === "teams" ? '<p class="callout">Teams alternate and get equal turns. On an uneven roster, the smaller team rotates more often.</p>' : ""}</section><section class="form-section"><div class="section-heading"><span class="step">03</span><h2>Give it a twist.</h2></div><div class="rule-grid">${Object.entries(
-    RULES,
-  )
-    .map(
-      ([id, r]) =>
-        `<button class="rule-card ${s.rule === id ? "active" : ""}" aria-pressed="${s.rule === id}" data-rule="${id}"><span>${r.emoji}</span>${r.name}</button>`,
-    )
-    .join(
-      "",
-    )}</div><p class="rule-explanation">${esc(RULES[s.rule]?.hint || RULES.classic.hint)}</p>${s.rule === "forbidden" ? `<p class="callout">Only cards with three hand-written forbidden clues are used. Your mix has ${all} eligible answers.</p>` : s.rule === "hum" ? '<p class="callout">Hum along uses song cards. Add the Hum along deck if your mix has none.</p>' : ""}<details class="house-rules"><summary>House rules & little extras ${ic("settings")}</summary><div class="two-fields"><label class="field"><span>Pass limit</span><select id="passLimit">${[0, 3, 5, 10].map((v) => option(v, v ? `${v} passes` : "Unlimited", s.passLimit)).join("")}</select></label><label class="field"><span>Time cost per pass</span><select id="passPenalty">${[0, 2, 3, 5].map((v) => option(v, v ? `${v} seconds` : "No penalty", s.passPenalty)).join("")}</select></label></div><label class="switch-row"><span><b>Streak sparks</b><small>Third correct in a row and onward: +2 seconds, capped at +10 per round. Quick play and co-op only.</small></span><input type="checkbox" id="streak" ${s.streak ? "checked" : ""} ${["teams", "individual"].includes(s.mode) ? "disabled" : ""}></label>${["teams", "individual"].includes(s.mode) ? `<label class="switch-row"><span><b>Lightning finish</b><small>The last lap gives everyone 30 seconds. Same scoring, faster finish.</small></span><input type="checkbox" id="lightning" ${s.lightning ? "checked" : ""}></label>` : ""}<button class="text-button" data-action="settings">${ic("settings")} Sound, tilt & accessibility</button></details></section></div><aside class="setup-summary"><div class="eyebrow">YOUR NIGHT, AT A GLANCE</div><h2>${s.mode === "quick" ? "A quick good time." : s.mode === "teams" ? "Let the rivalry begin." : s.mode === "coop" ? "We're in this together." : "Everybody gets a turn."}</h2><div class="summary-decks">${
-    state.selected
-      .map(deckById)
-      .filter(Boolean)
-      .map((d) => `<span>${d.emoji} ${esc(d.name)}</span>`)
-      .join("") || "<span>No decks selected yet.</span>"
-  }</div><button class="text-button" data-action="library">Edit your deck mix ${ic("arrow")}</button><dl class="summary-details"><div><dt>Fresh answers</dt><dd id="fresh-count">${n.toLocaleString()}</dd></div><div><dt>Round length</dt><dd>${s.seconds} seconds</dd></div><div><dt>Your twist</dt><dd>${esc(RULES[s.rule].name)}</dd></div><div><dt>Controls</dt><dd>${state.settings.control === "tilt" ? "Tilt + tap backup" : "Tap / keyboard"}</dd></div></dl><div id="setup-error" role="alert"></div><button class="button full" data-action="start-session" ${!state.selected.length ? "disabled" : ""}>${s.mode === "quick" ? "Start quick round" : "Start game night"} ${ic("arrow")}</button><p class="panel-note">Keep the screen facing your friends.<br>They're the clue-givers. You're the guesser.</p><button class="text-button room-open" data-action="room">${ic("screen")} Open room display</button><p class="small muted">For a second screen on this browser. Keep it out of the guesser's view.</p></aside></div>`;
+  const s = state.setup, n = fresh().length;
+  const selected = state.selected.map(deckById).filter(Boolean);
+  return `<div class="compact-page"><button class="back-button" data-action="library">${ic('back')} Decks</button><section class="page-heading"><div><h1>New game</h1><p>${selected.length} deck${selected.length === 1 ? '' : 's'} · <span id="fresh-count">${n.toLocaleString()}</span> fresh answers</p></div></section><div class="grouped-list setup-basics"><label class="setting-row"><span>Game</span><select id="mode">${[['quick','Quick play'],['individual','Take turns'],['teams','Teams'],['coop','Co-op']].map(([id,label]) => option(id,label,s.mode)).join('')}</select></label><label class="setting-row"><span>Round length</span><select id="seconds">${[30,60,90,120].map(v => option(v,`${v} seconds`,s.seconds)).join('')}</select></label><label class="setting-row"><span>Clue style</span><select id="rule">${Object.entries(RULES).map(([id,r]) => option(id,r.name,s.rule)).join('')}</select></label>${s.mode !== 'quick' ? `<label class="setting-row"><span>${s.mode === 'teams' ? 'Laps per team' : 'Turns per player'}</span><select id="rounds">${[1,2,3,4,5].map(v => option(v,v,s.rounds)).join('')}</select></label>` : ''}${s.mode === 'coop' ? `<label class="setting-row"><span>Shared target</span><select id="target">${[10,20,30,40,50,60,75,100].map(v => option(v,`${v} correct`,s.target)).join('')}</select></label>` : ''}</div><p class="footnote rule-explanation">${esc(RULES[s.rule].hint)}</p>${s.rule === 'forbidden' || s.rule === 'hum' ? `<p class="callout">${s.rule === 'forbidden' ? `${available().length} answers in your mix have forbidden clues.` : 'This style uses song cards. Include the Hum along deck.'}</p>` : ''}${s.mode === 'quick' ? `<details class="players-options disclosure"><summary>Players & group ${ic('chevron')}</summary><div class="disclosure-body">${playersFields()}${groupField()}</div></details>` : `<section class="players-section"><h2>Players</h2>${playersFields()}<p class="footnote">${s.mode === 'teams' ? 'Teams alternate and get equal turns.' : s.mode === 'coop' ? 'Every correct answer counts toward the shared target.' : 'Pass the phone between turns. Scores stay together.'}</p><details class="group-options disclosure"><summary>Group & card history ${ic('chevron')}</summary><div class="disclosure-body">${groupField()}</div></details></section>`}<details class="game-options disclosure"><summary>More options ${ic('chevron')}</summary><div class="disclosure-body"><div class="grouped-list"><label class="setting-row"><span>Difficulty</span><select id="difficulty">${[['mixed','Mixed'],['1','Easy'],['2','Medium'],['3','Hard'],['ramp','Easy to hard']].map(([v,l]) => option(v,l,s.difficulty)).join('')}</select></label><label class="setting-row"><span>Controls</span><select id="control">${option('tap','Tap / keyboard',state.settings.control)}${option('tilt','Tilt + tap',state.settings.control)}</select></label><label class="setting-row"><span>Pass limit</span><select id="passLimit">${[0,3,5,10].map(v => option(v,v ? `${v} passes` : 'Unlimited',s.passLimit)).join('')}</select></label><label class="setting-row"><span>Pass penalty</span><select id="passPenalty">${[0,2,3,5].map(v => option(v,v ? `${v} seconds` : 'None',s.passPenalty)).join('')}</select></label></div>${['teams','individual'].includes(s.mode) ? `<label class="switch-row"><span><b>Lightning finish</b><small>30 seconds each on the last lap.</small></span><input type="checkbox" id="lightning" ${s.lightning ? 'checked' : ''}></label>` : `<label class="switch-row"><span><b>Streak bonus</b><small>+2 seconds from the third correct answer. Up to +10 per round.</small></span><input type="checkbox" id="streak" ${s.streak ? 'checked' : ''}></label>`}<button class="row-button" data-action="room">${ic('screen')}<span>Open room display<small>A second screen in this browser.</small></span>${ic('chevron')}</button></div></details><div id="setup-error" role="alert"></div><div class="setup-start"><button class="button full" data-action="start-session" ${selected.length ? '' : 'disabled'}>Start game ${ic('play')}</button><p class="footnote">Phone to your forehead. Friends give the clues.</p></div></div>`;
 }
 function playerOptions(id) {
   const p = state.setup.players.find((p) => p.id === id);
@@ -455,26 +362,17 @@ function resumeSession() {
   goto("ready");
 }
 function roundView() {
-  const s = state.session,
-    p = currentPlayer();
-  if (!s || !p) return "";
-  const cfg = playerConfig(s);
-  const r = s.round,
-    rule = RULES[cfg.rule],
-    total = s.schedule.length;
-  const team =
-    s.mode === "teams" ? ` · ${s.teamNames[p.team === "A" ? 0 : 1]}` : "";
-  if (screen === "ready")
-    return `<main id="main" class="ready-screen"><div class="play-topbar"><button class="text-button" data-action="save-exit">${ic("back")} Save & leave</button><span>TURN ${s.turn + 1} OF ${total}</span><button class="icon-button" aria-label="Game settings" data-action="settings">${ic("settings")}</button></div><div class="ready-content"><span class="pill">${s.config.lightning && s.schedule[s.turn].lap === s.config.rounds - 1 ? "⚡ LIGHTNING LAP" : "THE NEXT GREAT GUESSER"}</span><div class="ready-avatar">${esc(p.name[0].toUpperCase())}</div><h1>Your turn, ${esc(p.name)}.</h1><p class="muted">${esc(s.mode === "quick" ? "Your friends give the clues." : s.mode === "teams" ? s.teamNames[p.team === "A" ? 0 : 1] + " gives the clues." : "Everyone else gives the clues.")}</p>${s.levelId ? `<p class="level-ready-target">Level ${levelById(s.levelId).number}: ${esc(levelById(s.levelId).name)} · ${levelById(s.levelId).targets[0]} correct to earn a star</p>` : ""}<div class="ready-facts"><span>${ic("clock")} ${cfg.seconds} seconds</span><span>${rule.emoji} ${rule.name}</span></div><div class="instruction-card"><b>${rule.name}</b><p>${esc(rule.hint)}</p>${s.deckIds.some((id) => deckById(id)?.rule) ? "<small>Act it out and Hum along decks keep their own clue rule on Classic turns.</small>" : ""}</div><p class="ready-direction">${ic("phone")} Phone to your forehead. Screen facing your friends.</p><button class="button dark big" data-action="begin-countdown">I'm ready ${ic("arrow")}</button><p class="small muted">${state.settings.control === "tilt" ? "Return the phone upright between tilts." : "Clue-giver: tap Pass or Got it. On a laptop, use ← and →."}</p><button class="text-button" data-action="room">${ic("screen")} Room display</button></div></main>`;
-  if (screen === "countdown")
-    return `<main class="countdown-screen" id="main"><button class="text-button countdown-cancel" data-action="cancel-countdown">${ic("close")} Cancel</button><div><div class="eyebrow">SCREEN TO THE ROOM. EYES OFF THE ANSWER.</div><div class="countdown-number" id="countdown-number">${Math.max(1, Math.ceil((countdownUntil - Date.now()) / 1000))}</div><h2>${esc(p.name)}, get ready.</h2></div></main>`;
-  if (screen === "paused")
-    return `<main class="pause-screen" id="main"><div><span class="pill">TAKE A BREATHER</span><h1>Good guesses can wait.</h1><p>${esc(p.name)} · ${E.secondsLeft(r, Date.now())} seconds left · ${r.score} correct</p><div class="pause-actions">${button("Back to the game " + ic("play"), "resume-round", "dark big")}${button("End this round", "end-round", "outline")}${button("Save & leave", "save-exit", "outline")}</div><p class="small muted">The card is hidden and the clock is stopped.</p></div></main>`;
-  const card = r.queue[r.index],
-    liveRule = effectiveRule(card, cfg.rule);
-  const cluer = clueGivers()[clueIndex % Math.max(1, clueGivers().length)];
-  const voice = voices[(r.index + s.turn) % voices.length];
-  return `<main class="play-screen" id="main"><div class="play-topbar"><span><b>${esc(p.name)}</b>${esc(team)} <span class="turn-count">· ${s.turn + 1}/${total}</span></span><span class="round-rule">${RULES[liveRule].emoji} ${RULES[liveRule].name}</span><button class="icon-button" aria-label="Pause round" data-action="pause">${ic("pause")}</button></div><div class="time-track"><div id="time-bar" style="width:${Math.min(100, (E.secondsLeft(r, Date.now()) / r.baseSeconds) * 100)}%"></div></div><div class="game-hud"><span class="score-pill"><b id="round-score">${r.score}</b> correct</span><div class="timer" id="game-timer" aria-label="Seconds remaining">${E.secondsLeft(r, Date.now())}</div><span class="streak-pill">${r.streak >= 3 ? "🔥 " : ""}${r.streak} in a row${r.bonus ? ` · +${r.bonus}s` : ""}</span></div><div class="answer-stage ${card.image ? "photo-stage" : ""}"><div class="card-category">${esc(card.deckName)} <span>· ${["", "Easy", "Medium", "Hard"][card.d]}</span></div>${card.image ? `<img class="photo-prompt" src="./${card.image}" alt="Photo clue: ${esc(card.t)}"><div class="photo-instruction">Describe the scene. The guesser keeps their eyes off the screen.</div>` : ""}<h1 class="answer ${card.t.length > 44 ? "answer-long" : ""}" id="answer">${esc(card.t)}</h1>${liveRule === "forbidden" ? `<div class="forbidden"><span>DON'T SAY</span>${card.ban.map((w) => `<b>${esc(w)}</b>`).join("")}</div>` : ""}${liveRule === "one" ? `<div class="clue-rotation"><span>One clue from <b>${esc(cluer?.name || "the next person")}</b></span><button data-action="next-cluer">Next clue-giver ${ic("arrow")}</button><button data-action="next-cluer">Skip me</button></div>` : ""}${liveRule === "accent" ? `<div class="voice-prompt">Clue voice: <b>${esc(voice)}</b><button class="text-button" data-action="skip-voice">Change voice</button></div>` : ""}${["act", "hum", "word"].includes(liveRule) ? `<p class="live-rule-note">${esc(RULES[liveRule].hint)}</p>` : ""}</div><div class="game-actions"><button class="pass-button" data-action="pass" ${r.options.passLimit && r.passes >= r.options.passLimit ? "disabled" : ""}><span>←</span><b>Pass</b><small>${r.options.passLimit ? Math.max(0, r.options.passLimit - r.passes) + " left" : "Keep it moving"}${r.options.passPenalty ? " · −" + r.options.passPenalty + "s" : ""}</small></button><button class="got-button" data-action="got"><span>✓</span><b>Got it!</b><small>One very good guess →</small></button></div><div class="game-foot"><span>${state.settings.control === "tilt" ? "Tilt down ✓ · tilt up pass · return upright" : "← Pass · → Correct · Space to pause"}</span><button data-action="challenge">${ic("flag")} Rule broken?</button></div><div class="score-flash" id="score-flash" aria-live="polite"></div></main>`;
+  const s = state.session, p = currentPlayer();
+  if (!s || !p) return '';
+  const cfg = playerConfig(s), r = s.round, rule = RULES[cfg.rule], total = s.schedule.length;
+  const turn = total > 1 ? `Turn ${s.turn+1} of ${total}` : '';
+  const team = s.mode === 'teams' ? s.teamNames[p.team === 'A' ? 0 : 1] : '';
+  if (screen === 'ready') return `<main id="main" class="ready-screen"><div class="play-topbar"><button class="text-button" data-action="save-exit">${ic('back')} Save & leave</button><span>${turn}</span><button class="icon-button" aria-label="Game settings" data-action="settings">${ic('settings')}</button></div><div class="ready-content"><div class="ready-phone">${ic('phone')}</div><h1>${esc(p.name)}, you're up.</h1><p class="ready-direction">Phone to your forehead.<br>${team ? `${esc(team)} gives the clues.` : 'Your friends give the clues.'}</p>${s.levelId ? `<p class="level-ready-target">${esc(levelById(s.levelId).name)}<span>★ ${levelById(s.levelId).targets[0]} · ★★ ${levelById(s.levelId).targets[1]} · ★★★ ${levelById(s.levelId).targets[2]} correct</span></p>` : ''}<div class="instruction-card"><div class="ready-facts"><b>${rule.name}</b><span>${cfg.seconds} seconds${s.config.lightning && s.schedule[s.turn].lap === s.config.rounds-1 ? ' · Lightning' : ''}</span></div><p>${esc(rule.hint)}</p>${s.deckIds.some(id => deckById(id)?.rule) ? '<small>Acting and humming decks keep their own clue style.</small>' : ''}</div><button class="button full" data-action="begin-countdown">I'm ready</button><p class="footnote">${state.settings.control === 'tilt' ? 'Tilt down for correct, up to pass. Return upright.' : 'A clue-giver taps Correct or Pass.'}</p></div></main>`;
+  if (screen === 'countdown') return `<main class="countdown-screen" id="main"><button class="text-button countdown-cancel" data-action="cancel-countdown">${ic('close')} Cancel</button><div><p>Screen toward your friends</p><div class="countdown-number" id="countdown-number">${Math.max(1,Math.ceil((countdownUntil-Date.now())/1000))}</div></div></main>`;
+  if (screen === 'paused') return `<main class="pause-screen" id="main"><div><span class="pause-symbol">${ic('pause')}</span><h1>Paused</h1><p>${E.secondsLeft(r,Date.now())} seconds left · ${r.score} correct</p><div class="pause-actions">${button('Resume','resume-round')}${button('Save & leave','save-exit','secondary')}<details class="pause-more disclosure"><summary>More ${ic('chevron')}</summary><div class="disclosure-body">${button('Challenge a clue','challenge','outline full')}${button('End round','end-round','outline full')}</div></details></div></div></main>`;
+  const card = r.queue[r.index], liveRule = effectiveRule(card,cfg.rule);
+  const cluer = clueGivers()[clueIndex % Math.max(1,clueGivers().length)], voice = voices[(r.index+s.turn)%voices.length];
+  return `<main class="play-screen" id="main"><div class="play-topbar"><span><b>${esc(p.name)}</b>${team ? ` · ${esc(team)}` : ''}</span><span class="round-rule">${RULES[liveRule].name}</span><button class="icon-button" aria-label="Pause round" data-action="pause">${ic('pause')}</button></div><div class="time-track"><div id="time-bar" style="width:${Math.min(100,E.secondsLeft(r,Date.now())/r.baseSeconds*100)}%"></div></div><div class="game-hud"><span class="score-pill"><b id="round-score">${r.score}</b> correct</span><div class="timer" id="game-timer" aria-label="Seconds remaining">${E.secondsLeft(r,Date.now())}</div><span class="streak-pill">${r.streak >= 3 ? `${r.streak} in a row` : ''}${r.bonus ? ` · +${r.bonus}s` : ''}</span></div><div class="answer-stage ${card.image ? 'photo-stage' : ''}"><div class="card-category">${esc(card.deckName)}</div>${card.image ? `<img class="photo-prompt" src="./${card.image}" alt="Photo clue: ${esc(card.t)}">` : ''}<h1 class="answer ${card.t.length > 44 ? 'answer-long' : ''}" id="answer">${esc(card.t)}</h1>${liveRule === 'forbidden' ? `<div class="forbidden"><span>Don't say</span>${card.ban.map(w => `<b>${esc(w)}</b>`).join('')}</div>` : ''}${liveRule === 'one' ? `<div class="clue-rotation"><span>One clue from <b>${esc(cluer?.name || 'the next person')}</b></span><button data-action="next-cluer" aria-label="Next clue-giver or skip me">Next / skip ${ic('chevron')}</button></div>` : ''}${liveRule === 'accent' ? `<div class="voice-prompt"><span>Voice: <b>${esc(voice)}</b></span><button class="text-button" data-action="skip-voice">Change</button></div>` : ''}${['act','hum','word'].includes(liveRule) ? `<p class="live-rule-note">${esc(RULES[liveRule].hint)}</p>` : ''}</div><div class="game-actions"><button class="pass-button" data-action="pass" ${r.options.passLimit && r.passes >= r.options.passLimit ? 'disabled' : ''}>${ic('arrow')}<b>Pass</b>${r.options.passLimit || r.options.passPenalty ? `<small>${r.options.passLimit ? `${Math.max(0,r.options.passLimit-r.passes)} left` : ''}${r.options.passPenalty ? ` · −${r.options.passPenalty}s` : ''}</small>` : ''}</button><button class="got-button" data-action="got">${ic('check')}<b>Correct</b></button></div><div class="game-foot">${state.settings.control === 'tilt' ? 'Tilt down: correct · Tilt up: pass' : '<span class="keyboard-hint">← Pass · → Correct · Space to pause</span>'}</div><div class="score-flash" id="score-flash" aria-live="polite"></div></main>`;
 }
 function effectiveRule(card, rule) {
   return rule === "classic" && card?.deckRule ? card.deckRule : rule;
@@ -806,27 +704,9 @@ function scoreRows(s) {
     .join("");
 }
 function recapView() {
-  const s = state.session,
-    r = s.round,
-    p = currentPlayer(),
-    missed = r.results.filter((x) => x.verdict !== "got"),
-    isLast = s.turn + 1 >= s.schedule.length,
-    total = s.rounds.reduce((a, r) => a + r.score, 0);
-  return `<section class="recap-heading"><span class="pill">THAT WAS A GOOD ROUND</span><h1>${r.score >= 8 ? "You understood the assignment." : r.score >= 3 ? "Now that’s good company." : "Every guess is a good story."}</h1><p>${esc(p.name)} · ${esc(RULES[playerConfig(s).rule].name)} · Turn ${s.turn + 1} of ${s.schedule.length}</p></section><div class="recap-layout"><div><div class="result-stats"><div><b class="display">${r.score}</b><span>got it!</span></div><div><b class="display">${r.results.filter((x) => x.verdict === "pass").length}</b><span>passed</span></div><div><b class="display">${r.bestStreak}</b><span>best streak</span></div></div>${r.reason === "exhausted" ? '<p class="callout">You reached the end of the fresh cards. Every shown answer stays in your group’s history. Add more decks for your next round.</p>' : ""}${r.bonus ? `<p class="small muted bonus-note">Streak sparks added ${r.bonus} seconds. Corrections below change points; time already played stays as played.</p>` : ""}<div class="reveal-section"><div class="section-heading"><h2>“Wait, what was it?!”</h2><span class="small muted">${missed.length} to reveal</span></div>${missed.length ? `<div class="reveal-grid">${missed.map((x) => `<button class="reveal-card" data-reveal="${r.results.indexOf(x)}"><span>${x.verdict === "challenge" ? "RULE CHALLENGE" : x.verdict === "unanswered" ? (r.reason === "ended" ? "ROUND ENDED" : "TIME RAN OUT") : "THE ONE THAT GOT AWAY"}</span><b>?</b><small>Tap to reveal</small></button>`).join("")}</div>` : '<p class="perfect-note">Every card answered. Nothing left hiding. ✨</p>'}</div><details class="round-details"><summary>Round review & score corrections <span>${r.results.length} ${r.results.length === 1 ? "card" : "cards"}</span></summary><p class="small muted">Settle close calls together. These changes update the session scoreboard immediately.</p><div class="result-list">${r.results
-    .map(
-      (x, i) =>
-        `<div class="result-line"><span>${esc(x.card.t)}${x.card.credit ? `<button class="text-button" data-photo-credit="${i}" aria-label="Photo credit for ${esc(x.card.t)}">ⓘ</button>` : ""}</span><select aria-label="Result for ${esc(x.card.t)}" data-correct="${i}">${[
-          ["got", "✓ Correct"],
-          ["pass", "↗ Passed"],
-          ["challenge", "⚑ Rule broken"],
-          ["unanswered", "— Unanswered"],
-        ]
-          .map(([v, l]) => option(v, l, x.verdict))
-          .join("")}</select></div>`,
-    )
-    .join(
-      "",
-    )}</div></details></div><aside class="recap-sidebar"><div class="eyebrow">${s.mode === "coop" ? "OUR SHARED TARGET" : "THE NIGHT SO FAR"}</div><h2>${s.mode === "coop" ? `${total} / ${s.config.target}` : s.mode === "quick" ? "A little victory." : "Friendly competition."}</h2>${s.mode === "coop" ? `<progress value="${total}" max="${s.config.target}" aria-label="Progress toward shared target"></progress><p class="small muted">${total >= s.config.target ? "Target reached! Every extra point is a victory lap." : `${s.config.target - total} more correct guesses to reach the target.`}</p>` : `<div class="scoreboard">${scoreRows(s)}</div>`}<button class="button full" data-action="${isLast ? "final-results" : "next-turn"}">${isLast ? "The final reveal" : "Next guesser"} ${ic("arrow")}</button><button class="button outline full" data-action="share-round">${ic("share")} Share this round</button><button class="text-button" data-action="save-exit">Save & leave for now</button>${!isLast && r.reason === "exhausted" ? button("Add more decks", "extend-mix", "outline full") : ""}<p class="panel-note">Every shown card is remembered for<br>“${esc(s.group)}”.</p></aside></div>`;
+  const s = state.session, r = s.round, p = currentPlayer(), missed = r.results.filter(x => x.verdict !== 'got'), isLast = s.turn+1 >= s.schedule.length;
+  const quick = s.mode === 'quick' && !s.levelId, total = s.rounds.reduce((a,r) => a+r.score,0);
+  return `<div class="recap-page"><section class="page-heading"><div><h1>Round complete</h1><p>${esc(p.name)}${s.schedule.length > 1 ? ` · Turn ${s.turn+1} of ${s.schedule.length}` : ''}</p></div><button class="icon-button" data-action="share-round" aria-label="Share this round">${ic('share')}</button></section><div class="result-stats"><div><b>${r.score}</b><span>Correct</span></div><div><b>${r.results.filter(x => x.verdict === 'pass').length}</b><span>Passed</span></div><div><b>${r.bestStreak}</b><span>Best streak</span></div></div>${r.reason === 'exhausted' ? '<p class="callout">All fresh cards played. Add more decks or choose a new card cycle.</p>' : ''}${r.bonus ? `<p class="footnote">Streak bonus: +${r.bonus} seconds.</p>` : ''}${missed.length ? `<section class="reveal-section"><h2>The ones you missed</h2><div class="reveal-grid">${missed.map(x => `<button class="reveal-card" data-reveal="${r.results.indexOf(x)}"><span>${x.verdict === 'challenge' ? 'Challenged' : x.verdict === 'unanswered' ? 'Unanswered' : 'Passed'}</span><b>Reveal ${ic('chevron')}</b></button>`).join('')}</div></section>` : '<p class="perfect-note">Every card answered. Nicely done.</p>'}<details class="round-details"><summary>Review answers <span>${r.results.length} ${r.results.length === 1 ? 'card' : 'cards'}</span>${ic('chevron')}</summary><p class="footnote">Settle close calls here. Corrections update the score.</p><div class="result-list">${r.results.map((x,i) => `<div class="result-line"><span>${esc(x.card.t)}${x.card.credit ? `<button class="text-button" data-photo-credit="${i}" aria-label="Photo credit for ${esc(x.card.t)}">${ic('info')}</button>` : ''}</span><select aria-label="Result for ${esc(x.card.t)}" data-correct="${i}">${[['got','Correct'],['pass','Passed'],['challenge','Rule broken'],['unanswered','Unanswered']].map(([v,l]) => option(v,l,x.verdict)).join('')}</select></div>`).join('')}</div></details>${s.mode === 'coop' ? `<section class="recap-scoreboard"><h2>Team total <span>${total} / ${s.config.target}</span></h2><progress value="${total}" max="${s.config.target}" aria-label="Progress toward shared target"></progress></section>` : s.mode !== 'quick' ? `<section class="recap-scoreboard"><h2>Scoreboard</h2>${scoreRows(s)}</section>` : ''}<div class="recap-actions">${button(quick ? 'Play again' : isLast ? (s.levelId ? 'See stars' : 'Final scores') : 'Next player',quick ? 'quick-replay' : isLast ? 'final-results' : 'next-turn','full')}${button(quick ? 'Done' : 'Save & leave',quick ? 'quick-done' : 'save-exit','text-only')}${!isLast && r.reason === 'exhausted' ? button('Add decks','extend-mix','secondary full') : ''}</div></div>`;
 }
 function finishView() {
   const s = state.session;
@@ -838,7 +718,7 @@ function finishView() {
     winners = board.filter((p) => p.score === top),
     total = s.rounds.reduce((a, r) => a + r.score, 0),
     won = s.mode === "coop" && total >= s.config.target;
-  return `<section class="final-screen"><div class="final-medallion">${s.mode === "coop" ? "💚" : "🏆"}</div><div class="eyebrow">${esc(s.group)} · GAME NIGHT COMPLETE</div><h1>${s.mode === "quick" ? "Good guesses. Better company." : s.mode === "coop" ? (won ? "The whole room wins." : "Same team. Next time.") : winners.length > 1 ? "Call it a shared victory." : esc(winners[0].name) + " takes the crown."}</h1><p class="muted">${s.mode === "coop" ? `${total} correct ${total === 1 ? "answer" : "answers"}. A target of ${s.config.target}. ${won ? "You did that together." : "The rematch is going to be good."}` : `${total} correct ${total === 1 ? "guess" : "guesses"} across ${s.rounds.length} ${s.rounds.length === 1 ? "round" : "rounds"}. A very good use of an evening.`}</p><div class="final-scoreboard">${scoreRows(s)}</div><div class="final-buttons">${button("Same crowd, fresh cards " + ic("fresh"), "rematch", "dark")}${button("Mix up the decks", "finish-library", "outline")}${button("Share the good stuff " + ic("share"), "share-session", "outline")}</div><p class="small muted">Your card history stays with “${esc(s.group)}”. No repeat answers until you choose a new cycle.</p></section>`;
+  return `<section class="final-screen"><div class="final-medallion">${s.mode === "coop" ? "💚" : "🏆"}</div><h1>${s.mode === "quick" ? "Game complete" : s.mode === "coop" ? (won ? "Target reached" : "Game complete") : winners.length > 1 ? "It’s a tie" : esc(winners[0].name) + " wins"}</h1><p class="muted">${s.mode === "coop" ? `${total} correct ${total === 1 ? "answer" : "answers"}. A target of ${s.config.target}. ` : `${total} correct ${total === 1 ? "guess" : "guesses"} across ${s.rounds.length} ${s.rounds.length === 1 ? "round" : "rounds"}. `}</p>${s.mode === "coop" ? `<div class="final-coop"><progress value="${total}" max="${s.config.target}" aria-label="Progress toward shared target"></progress></div>` : `<div class="final-scoreboard">${scoreRows(s)}</div>`}<div class="final-buttons">${button("Play again", "rematch", "dark")}${button("Done", "finish-library", "outline")}${button("Share results", "share-session", "outline")}</div><p class="small muted">Your card history stays with “${esc(s.group)}”. No repeat answers until you choose a new cycle.</p></section>`;
 }
 
 function groupProgress(group = state.group) {
@@ -848,24 +728,16 @@ function groupProgress(group = state.group) {
   return state.progress[key];
 }
 function levelsView() {
-  const progress = groupProgress(),
-    stars = levels.reduce((n, l) => n + (progress[l.id]?.stars || 0), 0),
-    clears = levels.filter((l) => progress[l.id]?.stars > 0).length;
-  return `<section class="page-heading"><div class="eyebrow">36 LEVELS · SIX WAYS TO PLAY</div><h1>The challenge trail.</h1><p class="muted">One guesser, a room of clue-givers, and a goal worth shouting about. Earn one star to open the next stop in each path.</p></section><section class="trail-summary"><div><strong>${stars}<small> / 108 stars</small></strong><p>${clears} ${clears===1?"level":"levels"} cleared by ${esc(state.group)}</p></div><div><b>${clears === 36 ? "Party legends" : clears >= 24 ? "Clue masters" : clears >= 12 ? "Crowd favorites" : clears >= 6 ? "Getting good" : "A fresh adventure"}</b><p>Progress stays with this group on this device.</p><button class="text-button" data-action="setup">Change group or guesser</button></div></section><div class="trail-chapters">${chapters
-    .map(
-      (ch) =>
-        `<section class="trail-chapter"><div class="section-heading"><span class="chapter-emoji">${ch.emoji}</span><div><h2>${ch.name}</h2><p class="muted">${ch.description}</p></div></div><div class="level-grid">${levels
-          .filter((l) => l.chapter === ch.id)
-          .map((l) => {
-            const p = progress[l.id] || {},
-              unlocked = isUnlocked(l, progress);
-            return `<article class="level-card ${unlocked ? "" : "locked"}"><div class="level-number">LEVEL ${String(l.number).padStart(2, "0")}<span aria-label="${p.stars || 0} of 3 stars">${"★".repeat(p.stars || 0)}${"☆".repeat(3 - (p.stars || 0))}</span></div><h3>${l.name}</h3><p>${RULES[l.rule].name} · ${l.seconds} seconds</p><p class="level-targets">★ ${l.targets[0]} &nbsp; ★★ ${l.targets[1]} &nbsp; ★★★ ${l.targets[2]} correct</p><p class="small muted">${l.deckIds.map((id) => esc(deckById(id).name)).join(" + ")}</p><div class="level-bottom"><span class="small">${p.attempts ? `Best: ${p.best} · ${p.attempts} ${p.attempts === 1 ? "try" : "tries"}` : unlocked ? "Your next good story" : "Earn a star on the previous level"}</span><button class="button dark" data-level="${l.id}" ${unlocked ? "" : "disabled"}>${unlocked ? (p.attempts ? "Play again" : "Play level") : "Locked"}</button></div></article>`;
-          })
-          .join("")}</div></section>`,
-    )
-    .join(
-      "",
-    )}</div><p class="small muted">Every chapter starts open. Levels use fixed time and difficulty, with no time bonuses or handicaps. Cards stay fresh across this trail and game nights; repeating a card cycle is always your choice.</p>`;
+  const progress = groupProgress(), stars = levels.reduce((n,l) => n + (progress[l.id]?.stars || 0),0);
+  const ch = chapters.find(c => c.id === activeChapter);
+  if (ch) return `<div class="compact-page"><button class="back-button" data-action="all-challenges">${ic('back')} Challenges</button><section class="page-heading"><div><h1>${esc(ch.name)}</h1><p>Earn a star to unlock the next level.</p></div></section><div class="grouped-list level-list">${levels.filter(l => l.chapter === ch.id).map(l => {
+    const p = progress[l.id] || {}, unlocked = isUnlocked(l,progress);
+    return `<button class="level-row ${unlocked ? '' : 'locked'}" data-level="${l.id}" ${unlocked ? '' : 'disabled'} aria-label="${esc(l.name)}${unlocked ? '' : ', locked. Complete the previous level.'}"><span class="level-number">${String(l.number).padStart(2,'0')}</span><span class="row-copy"><b>${esc(l.name)}</b><small>${RULES[l.rule].name} · ${l.seconds}s${p.attempts ? ` · Best ${p.best}` : ''}</small></span><span class="level-stars" aria-label="${p.stars || 0} of 3 stars">${unlocked ? '★'.repeat(p.stars || 0) + '☆'.repeat(3-(p.stars || 0)) : ic('lock')}</span>${unlocked ? ic('chevron') : ''}</button>`;
+  }).join('')}</div><p class="footnote">Each level has fixed settings. Your group's no-repeat history still applies.</p></div>`;
+  return `<section class="page-heading"><div><h1>Challenges</h1><p>Six paths. Thirty-six reasons to play.</p></div></section><div class="progress-summary"><span>${ic('star')} <b>${stars}</b><span class="muted"> / 108 stars</span></span><button class="text-button" data-action="edit-group">${esc(state.group)} ${ic('chevron')}</button></div><div class="chapter-grid">${chapters.map((ch,i) => {
+    const list = levels.filter(l => l.chapter === ch.id), earned = list.reduce((n,l) => n+(progress[l.id]?.stars || 0),0);
+    return `<button class="chapter-card" data-chapter="${ch.id}" style="--chapter-color:${['#e8edff','#e3f2e9','#f8e6f0','#f5eadc','#e5eef8','#eeebfa'][i]}"><span class="chapter-art">${ch.emoji}</span><span class="row-copy"><b>${esc(ch.name)}</b><small>${earned} of 18 stars</small></span>${ic('chevron')}<span class="chapter-progress"><span style="width:${earned/18*100}%"></span></span></button>`;
+  }).join('')}</div>`;
 }
 function startLevel(id) {
   const l = levelById(id);
@@ -884,7 +756,7 @@ function startLevel(id) {
     modal(
       "A few more fresh cards needed.",
       `<p>This level has ${pool.length} fresh answers left for “${esc(state.group)}” and needs ${l.targets[0]} for its first star. You can deliberately start a new cycle for these decks, or try another path.</p>`,
-      button("Back to the trail", "close-modal", "outline") +
+      button("Challenges", "close-modal", "outline") +
         `<button class="button" data-level-reset="${id}">Start a new card cycle</button>`,
     );
     return;
@@ -930,18 +802,21 @@ function startLevel(id) {
   goto("ready");
 }
 function levelFinish(s) {
-  const l = levelById(s.levelId),
-    score = s.rounds.reduce((n, r) => n + r.score, 0),
-    stars = starsFor(l, score),
-    next = levels.find(
-      (x) => x.chapter === l.chapter && x.index === l.index + 1,
-    ),
-    award = s.levelAward || groupProgress(s.group)[l.id] || {};
-  return `<section class="final-screen"><div class="level-award" aria-label="${stars} of 3 stars">${"★".repeat(stars)}${"☆".repeat(3 - stars)}</div><div class="eyebrow">LEVEL ${l.number} · ${l.name}</div><h1>${stars === 3 ? "You made that look easy." : stars ? "One step further." : "A good reason for a rematch."}</h1><p class="muted">${score} correct. ${stars ? `${stars} ${stars === 1 ? "star" : "stars"} earned.` : `${l.targets[0]} correct earns the first star.`} Your best: ${award.best || score}.</p><div class="final-buttons">${next && isUnlocked(next, groupProgress(s.group)) ? `<button class="button dark" data-level="${next.id}">Next level ${ic("arrow")}</button>` : ""}<button class="button outline" data-level="${l.id}">Try again with fresh cards</button>${button("Back to the trail", "levels", "outline")}${button("Share this round", "share-round", "outline")}</div><p class="small muted">Stars and personal bests are saved for “${esc(s.group)}”. All shown cards remain in your no-repeat history.</p></section>`;
+  const l = levelById(s.levelId), score = s.rounds.reduce((n,r) => n+r.score,0), stars = starsFor(l,score);
+  const next = levels.find(x => x.chapter === l.chapter && x.index === l.index+1);
+  const canContinue = next && isUnlocked(next,groupProgress(s.group));
+  const award = s.levelAward || groupProgress(s.group)[l.id] || {};
+  return `<section class="final-screen"><div class="level-award" aria-label="${stars} of 3 stars">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div><h1>${stars ? "Level complete" : "Keep going"}</h1><p class="muted">${esc(l.name)} · ${score} correct</p><p class="small muted">${stars ? `${stars} ${stars === 1 ? "star" : "stars"} earned` : `${l.targets[0]} correct earns your first star`} · Best ${award.best || score}</p><div class="final-buttons">${canContinue ? `<button class="button" data-level="${next.id}">Next level</button>` : ""}<button class="button ${canContinue ? "secondary" : ""}" data-level="${l.id}">Try again</button>${button("Challenges","levels","text-only")}</div><button class="text-button" data-action="share-round">${ic("share")} Share result</button></section>`;
 }
 
 function customView() {
-  return `<section class="page-heading"><div class="eyebrow">THE BEST MATERIAL IS YOUR OWN</div><h1>Inside jokes. Outside voices.</h1><p class="muted">Family lore, favorite coworkers, your extremely specific friend group.</p></section><div class="custom-layout"><section class="custom-editor"><h2>${customEdit ? "Edit your deck." : "Make it personal."}</h2><form id="custom-form"><label class="field"><span>Give your deck a name</span><input id="deck-name" maxlength="48" required placeholder="e.g. The group chat, unfiltered" value="${esc(customDraft.name)}"></label><label class="field"><span>Your cards · one answer per line</span><textarea id="deck-text" rows="11" required placeholder="The office coffee machine&#10;Dad's famous pancakes&#10;That camping trip&#10;The family group chat&#10;Auntie's dance moves">${esc(customDraft.text)}</textarea><small>5–500 unique answers. Up to 110 characters each. Blank lines and duplicates are removed.</small></label><details><summary>Add difficulty & forbidden clues</summary><p class="small muted">Optional format: answer | easy, medium, or hard | three comma-separated forbidden clues</p><code class="format-example">Titanic | easy | ship, iceberg, movie</code><p class="small muted">Cards without a difficulty use Medium. Forbidden Words uses only cards with three clues.</p></details><div class="custom-actions"><button class="button dark" type="submit">${customEdit ? "Save changes" : "Create my deck"} ${ic("arrow")}</button><label class="button outline file-label">${ic("download")} Import a file<input type="file" id="import-file" accept=".txt,.json,text/plain,application/json" class="sr-only"></label>${customEdit ? button("Cancel edit", "cancel-edit", "outline") : ""}</div><div id="custom-error" role="alert"></div></form><p class="small muted">Saved on this device. Export a file for backup, or share a compact deck as a link. No account needed.</p></section><section class="custom-shelf"><h2>Your deck shelf <span class="count-badge">${state.custom.length}</span></h2>${state.custom.length ? state.custom.map((d) => `<article class="saved-deck"><div><span class="saved-emoji">✍️</span><h3>${esc(d.name)}</h3><p class="small muted">${d.cards.length} cards · saved on this device</p></div><div class="saved-actions"><button class="button small" data-only="${d.id}">Play</button><button class="icon-button" data-edit="${d.id}" aria-label="Edit ${esc(d.name)}">${ic("edit")}</button><button class="icon-button" data-share="${d.id}" aria-label="Share ${esc(d.name)}">${ic("share")}</button><button class="icon-button" data-export="${d.id}" aria-label="Export ${esc(d.name)}">${ic("download")}</button><button class="icon-button" data-delete="${d.id}" aria-label="Delete ${esc(d.name)}">${ic("close")}</button></div></article>`).join("") : `<div class="empty"><div class="empty-emoji">✍️</div><h3>That joke deserves its own card.</h3><p>Create your first deck and it will live right here.</p></div>`}<div class="custom-tip"><div class="eyebrow">A LITTLE HOST WISDOM</div><h3>Specific is funny.</h3><p>“A camping trip” is fine.<br>“Dad fighting the tent in the rain” is a whole story.</p><small>Make sure everyone playing has a way in. Save the deep cuts for Hard.</small></div></section></div>`;
+  if (editorOpen) return `<div class="compact-page"><button class="back-button" data-action="cancel-edit">${ic('back')} My Decks</button><section class="page-heading"><div><h1>${customEdit ? 'Edit deck' : 'New deck'}</h1></div></section><form id="custom-form" class="custom-editor"><label class="field"><span>Name</span><input id="deck-name" maxlength="48" required placeholder="The group chat" value="${esc(customDraft.name)}"></label><label class="field"><span>Cards</span><textarea id="deck-text" rows="9" required placeholder="One answer per line&#10;Dad’s famous pancakes&#10;That camping trip&#10;The office coffee machine">${esc(customDraft.text)}</textarea><small>5–500 answers. One per line.</small></label><details class="custom-format disclosure"><summary>Difficulty & forbidden clues ${ic('chevron')}</summary><div class="disclosure-body"><p class="footnote">Optional: answer | difficulty | three forbidden clues</p><code class="format-example">Titanic | easy | ship, iceberg, movie</code><p class="footnote">Use easy, medium, or hard. Cards without a difficulty use Medium.</p></div></details><div id="custom-error" role="alert"></div><div class="custom-actions"><button class="button full" type="submit">${customEdit ? 'Save changes' : 'Save deck'}</button><label class="text-button file-label">${ic('download')} Import text or JSON<input type="file" id="import-file" accept=".txt,.json,text/plain,application/json" class="sr-only"></label></div></form></div>`;
+  return `<section class="page-heading"><div><h1>My Decks</h1><p>Your people. Your inside jokes.</p></div>${state.custom.length ? `<button class="icon-button accent" data-action="new-deck" aria-label="Create a deck">${ic('plus')}</button>` : ''}</section>${state.custom.length ? `<div class="grouped-list saved-decks">${state.custom.map(d => `<button class="saved-deck" data-manage="${d.id}"><span class="row-emoji">${d.emoji}</span><span class="row-copy"><b>${esc(d.name)}</b><small>${d.cards.length} cards</small></span>${ic('chevron')}</button>`).join('')}</div><p class="footnote">Saved on this device. Open a deck to play, edit, or share it.</p>` : `<section class="empty custom-empty"><span class="empty-symbol">${ic('cards')}</span><h2>Make it personal.</h2><p>Turn familiar faces and favorite stories<br>into your next great game.</p>${button('Create a deck','new-deck')}</section>`}`;
+}
+function manageDeck(id) {
+  const d = deckById(id);
+  if (!d) return;
+  modal(d.name, `<p class="footnote">${d.cards.length} cards · Saved on this device</p><div class="grouped-list"><button class="row-button" data-edit="${id}">${ic('edit')}<span>Edit cards</span>${ic('chevron')}</button><button class="row-button" data-share="${id}">${ic('share')}<span>Share deck</span>${ic('chevron')}</button><button class="row-button" data-export="${id}">${ic('download')}<span>Export backup</span>${ic('chevron')}</button><button class="row-button danger" data-delete="${id}">${ic('minus')}<span>Delete deck</span>${ic('chevron')}</button></div>`, `<button class="button" data-only="${id}">Play this deck</button>`);
 }
 function saveCustom() {
   try {
@@ -962,6 +837,7 @@ function saveCustom() {
     else state.custom.push(d);
     persist();
     customEdit = null;
+    editorOpen = false;
     customDraft = { name: "", text: "" };
     render();
     toast(
@@ -1034,8 +910,8 @@ async function shareText(text, url = "") {
   pendingShare = { text, url };
   const content = [text, url].filter(Boolean).join("\n");
   modal(
-    url ? "Your deck, ready to share." : "Share the good stuff.",
-    `<p>${url ? "Anyone with this link can read and import this deck." : "A little proof of a very good time."}</p><textarea id="share-content" rows="6" readonly aria-label="Share text">${esc(content)}</textarea>`,
+    url ? "Share deck" : "Share results",
+    `<p>${url ? "Anyone with this link can read and import this deck." : "Your round, ready to send."}</p><textarea id="share-content" rows="6" readonly aria-label="Share text">${esc(content)}</textarea>`,
     button("Copy " + (url ? "link" : "text"), "copy-share", "dark") +
       (navigator.share ? button("Share…", "native-share", "outline") : ""),
   );
@@ -1062,9 +938,10 @@ function importShared() {
     const checked = E.parseCustom(x.n, text);
     customDraft = { name: checked.name, text };
     screen = "custom";
+    editorOpen = true;
     history.replaceState(null, "", location.pathname + location.search);
     render();
-    toast("Shared deck loaded. Review it, then choose Create my deck.");
+    toast("Shared deck loaded. Review it, then choose Save deck.");
   } catch (e) {
     history.replaceState(null, "", location.pathname + location.search);
     toast("Could not open this deck link. Ask for an exported deck file.");
@@ -1108,11 +985,7 @@ async function importFile(file) {
   }
 }
 function settings() {
-  modal(
-    "Make yourself comfortable.",
-    `<label class="switch-row"><span><b>Sound effects</b><small>Short chimes for guesses and the final countdown.</small></span><input type="checkbox" id="sound" ${state.settings.sound ? "checked" : ""}></label><label class="switch-row"><span><b>Haptic feedback</b><small>A little pulse when your browser supports vibration.</small></span><input type="checkbox" id="haptics" ${state.settings.haptics ? "checked" : ""}></label><label class="field"><span>Controls</span><select id="control">${option("tap", "Tap buttons / arrow keys", state.settings.control)}${option("tilt", "Tilt, with tap backup", state.settings.control)}</select><small>Motion needs a supported phone and permission. Tap controls always remain available.</small></label><label class="field"><span>Tilt sensitivity</span><select id="sensitivity">${option("gentle", "Gentle · smaller tilt, longer hold", state.settings.sensitivity)}${option("steady", "Steady · recommended", state.settings.sensitivity)}${option("deliberate", "Deliberate · deeper tilt", state.settings.sensitivity)}</select></label><button class="button outline" data-action="test-tilt">${ic("phone")} Enable & test tilt</button><div id="tilt-test"></div><div class="settings-info"><b>Designed for the room.</b><p>No microphone, camera, ads, or analytics. Player names, custom decks, session scores, and card history stay in this browser.</p><p>Screen readers: the answer is visible to accessibility tools. Use headphones or a sighted clue-giver if spoken output would reveal it.</p></div>`,
-    button("Done", "close-settings", "dark"),
-  );
+  modal("Settings", `<div class="grouped-list"><label class="switch-row"><span>Sound effects</span><input type="checkbox" id="sound" ${state.settings.sound ? 'checked' : ''}></label><label class="switch-row"><span>Haptic feedback</span><input type="checkbox" id="haptics" ${state.settings.haptics ? 'checked' : ''}></label><label class="setting-row"><span>Controls</span><select id="control">${option('tap','Tap / keyboard',state.settings.control)}${option('tilt','Tilt + tap',state.settings.control)}</select></label></div><details class="tilt-options disclosure"><summary>Tilt setup ${ic('chevron')}</summary><div class="disclosure-body"><label class="field"><span>Sensitivity</span><select id="sensitivity">${option('gentle','Gentle',state.settings.sensitivity)}${option('steady','Steady',state.settings.sensitivity)}${option('deliberate','Deliberate',state.settings.sensitivity)}</select></label><p class="footnote">Requires motion permission on a supported phone. Tap controls always stay available.</p>${button('Enable & test tilt','test-tilt','secondary')}<div id="tilt-test"></div></div></details><div class="grouped-list settings-links"><button class="row-button" data-action="help">${ic('info')}<span>How to play</span>${ic('chevron')}</button><button class="row-button" data-action="offline">${ic('download')}<span>Offline play<small>${offlineStatus === 'ready' ? 'Saved on this device' : 'Save all decks for later'}</small></span>${ic('chevron')}</button><button class="row-button" data-action="room">${ic('screen')}<span>Room display</span>${ic('chevron')}</button><button class="row-button" data-action="credits">${ic('heart')}<span>About & credits</span>${ic('chevron')}</button></div><p class="footnote settings-footer">A Btown Brief game · <a href="https://hub.btownbrief.com/">Back to the HUB</a></p>`,button('Done','close-settings'));
 }
 async function testTilt() {
   if (!(await requestMotion())) return;
@@ -1131,14 +1004,14 @@ async function testTilt() {
 }
 function help() {
   modal(
-    "Phone up. Good times ahead.",
-    `<ol class="howto"><li><b>Pick your mix.</b><p>One deck or several. Name your group so seen cards stay out of future rounds.</p></li><li><b>Put the phone on your forehead.</b><p>Screen toward your friends. They give clues. You guess out loud. Never say part of the answer, spell it, or rhyme it.</p></li><li><b>Make the call.</b><p>A clue-giver taps Got it or Pass. With motion enabled, tilt the screen down for correct, up to pass, then return upright. On a laptop: → correct, ← pass, Space pause.</p></li><li><b>Enjoy the reveal.</b><p>Tap the mystery cards to reveal passes. Settle close calls in Round review before the next person goes.</p></li></ol><p class="callout">Keep the phone comfortable and secure. If tilting is awkward, let a clue-giver hold it and tap. A big room can use a second display from the same browser.</p>`,
-    button("Got it. Let’s play.", "close-modal", "dark"),
+    "How to play",
+    `<ol class="howto"><li><b>Pick your mix.</b><p>One deck or several. Name your group so seen cards stay out of future rounds.</p></li><li><b>Put the phone on your forehead.</b><p>Screen toward your friends. They give clues. You guess out loud. Never say part of the answer, spell it, or rhyme it.</p></li><li><b>Make the call.</b><p>A clue-giver taps Correct or Pass. With motion enabled, tilt the screen down for correct, up to pass, then return upright. On a laptop: → correct, ← pass, Space pause.</p></li><li><b>Enjoy the reveal.</b><p>Tap the mystery cards to reveal passes. Settle close calls in Review answers before the next person goes.</p></li></ol><p class="callout">Keep the phone comfortable and secure. If tilting is awkward, let a clue-giver hold it and tap. A big room can use a second display from the same browser.</p>`,
+    button("Done", "close-modal", "dark"),
   );
 }
 function credits() {
   modal(
-    "A little local. A lot of care.",
+    "About Heads Up",
     `<p>An independent Btown Brief party game, inspired by forehead charades. Not affiliated with the commercial Heads Up! app, Ellen DeGeneres, or Warner Bros.</p><p><b>${builtins.length} decks · ${E.uniqueCards(builtins.flatMap((d) => d.cards)).length.toLocaleString()} distinct answers.</b> Local material is adapted from Btown Brief's existing Heads Up decks, place guides, landmark map, and Where in Btown photo game. September 2026 editorial snapshot; place cards are prompts, not current business listings.</p><p>The Burlington cover is an AI-created illustration. Photography is credited to its original creators.</p><p><a href="./credits.html" target="_blank" rel="noopener">View all photo credits and content notes ↗</a></p><p class="small muted">Names and card history are saved locally. Shared custom-deck links contain the deck in the link itself; anyone with that link can read it. Group voting, live collaborative editing, voice recognition, and video recording are not part of this edition.</p>`,
   );
 }
@@ -1153,23 +1026,13 @@ function resetCycle() {
 }
 function roomOpen() {
   if (!channel) {
-    toast(
-      "This browser cannot open a synced second display. Use screen mirroring instead.",
-    );
+    modal("Room display", "<p>This browser cannot sync a second display. You can still mirror your screen from your device.</p>", button("Done","close-modal"));
     return;
   }
   const u = new URL(location.href);
   u.hash = "";
   u.search = "?display=room";
-  const w = window.open(u.href, "headsup-btown-room");
-  if (!w) {
-    toast("Allow pop-ups to open the room display.");
-    return;
-  }
-  toast(
-    "Move the room display to a second screen. Keep it out of the guesser’s view.",
-  );
-  broadcast();
+  modal("Room display", `<p>Open a second view for a projector or an extended display. It shows the current card, timer, and scores.</p><p class="footnote">Use this same browser on this device. Place the display behind the guesser so they can't see the answer.</p>`, `<a class="button" href="${esc(u.href)}" target="_blank" rel="noopener">Open display ${ic("screen")}</a>`);
 }
 function roomSnapshot() {
   const s = state.session;
@@ -1234,8 +1097,8 @@ channel?.addEventListener("message", (e) => {
 });
 async function offline() {
   modal(
-    "Ready for spotty bar Wi-Fi.",
-    `<p id="offline-message">${offlineStatus === "ready" ? `The game and all ${builtins.length} built-in decks, including the photos, are saved in this browser.` : "Save the game and photo cards in this browser before heading out. Keep this browser’s site data to retain offline access."}</p><p class="small muted">First save is about 22 MB. Offline play needs a successful first visit over HTTPS or localhost. A private hosted link may still need an online sign-in before its cached game can open.</p><p>On your phone, use your browser's Share or menu button, then <b>Add to Home Screen</b> for a more app-like experience.</p>`,
+    "Offline play",
+    `<p id="offline-message">${offlineStatus === "ready" ? `The game and all ${builtins.length} built-in decks, including the photos, are saved in this browser.` : "Save the game and photo cards in this browser before heading out. Keep this browser’s site data to retain offline access."}</p><p class="small muted">First save is about 22 MB. Offline play needs a successful first visit over HTTPS or localhost. Keep your browser’s site data to preserve saved games and decks.</p><p>On your phone, use your browser's Share or menu button, then <b>Add to Home Screen</b> for a more app-like experience.</p>`,
     button("Save / check offline files", "save-offline", "dark"),
   );
 }
@@ -1344,6 +1207,9 @@ document.addEventListener("click", async (e) => {
   }
   const b = e.target.closest("button");
   if (!b || b.disabled) return;
+  if (b.dataset.chapter) { activeChapter = b.dataset.chapter; goto("levels"); return; }
+  if (b.dataset.manage) { manageDeck(b.dataset.manage); return; }
+  if (b.dataset.mixRemove) { toggleDeck(b.dataset.mixRemove); selectedDecks(); return; }
   if (b.dataset.level) {
     startLevel(b.dataset.level);
     return;
@@ -1420,7 +1286,7 @@ document.addEventListener("click", async (e) => {
   if (b.dataset.reveal !== undefined) {
     const c = state.session.round.results[+b.dataset.reveal].card;
     b.classList.add("revealed");
-    b.innerHTML = `<span>NOW YOU KNOW</span><b>${esc(c.t)}</b><small>${esc(c.deckName)}</small>`;
+    b.innerHTML = `<span>Revealed</span><b>${esc(c.t)}</b><small>${esc(c.deckName)}</small>`;
     return;
   }
   if (b.dataset.photoCredit !== undefined) {
@@ -1434,6 +1300,8 @@ document.addEventListener("click", async (e) => {
   if (b.dataset.edit) {
     const d = deckById(b.dataset.edit);
     customEdit = d.id;
+    editorOpen = true;
+    closeModal();
     customDraft = { name: d.name, text: customText(d) };
     render();
     document.querySelector("#deck-name").focus();
@@ -1468,12 +1336,30 @@ document.addEventListener("click", async (e) => {
   }
   const a = b.dataset.action;
   if (!a) return;
-  if (a === "levels") {
+  if (a === "levels" || a === "all-challenges") {
+    activeChapter = null;
     goto("levels");
     return;
   }
   if (a === "library") {
     goto("library");
+    return;
+  }
+  if (a === "new-deck") { editorOpen = true; customEdit = null; customDraft = {name:"",text:""}; goto("custom"); return; }
+  if (a === "selected-decks") { selectedDecks(); return; }
+  if (a === "edit-group") {
+    const p = state.setup.players[0];
+    modal("Your group", `${groupField()}<label class="field"><span>Guesser</span><input data-player-name="${p.id}" value="${esc(p.name)}" maxlength="25"></label>`,button("Done","close-settings"));
+    return;
+  }
+  if (a === "quick-replay" || a === "quick-done") {
+    const s = state.session;
+    completeSession();
+    if (a === "quick-replay") state.setup = { ...s.config, players:state.setup.players, teamNames:s.teamNames };
+    state.selected = s.deckIds;
+    state.session = null;
+    persist();
+    goto(a === "quick-replay" ? "setup" : "library");
     return;
   }
   if (a === "custom") {
@@ -1648,7 +1534,7 @@ document.addEventListener("click", async (e) => {
   }
   if (a === "rematch") {
     const s = state.session;
-    state.setup = { ...s.config, players: s.players, teamNames: s.teamNames };
+    state.setup = { ...s.config, players: s.mode === "quick" ? state.setup.players : s.players, teamNames: s.teamNames };
     state.selected = s.deckIds;
     state.session = null;
     persist();
@@ -1689,6 +1575,7 @@ document.addEventListener("click", async (e) => {
   }
   if (a === "cancel-edit") {
     customEdit = null;
+    editorOpen = false;
     customDraft = { name: "", text: "" };
     render();
     return;
@@ -1729,7 +1616,7 @@ document.addEventListener("click", async (e) => {
     state.selected = [...state.session.deckIds];
     closeModal();
     goto("library");
-    toast("Add decks, then choose Let’s play to return to your session.");
+    toast("Add decks, then choose Play to return to your session.");
     return;
   }
   if (a === "room") {
@@ -1794,6 +1681,14 @@ document.addEventListener("input", (e) => {
 });
 document.addEventListener("change", (e) => {
   const el = e.target;
+  if (el.id === "mode" || el.id === "rule") {
+    state.setup[el.id] = el.value;
+    if (el.id === "mode" && el.value !== "quick" && state.setup.players.length < 2) {
+      state.setup.players.push({id:crypto.randomUUID(), name:"Player 2", team:state.setup.players[0]?.team === "B" ? "A" : "B", extra:0, difficulty:"inherit"});
+    }
+    if (["teams", "individual"].includes(state.setup.mode)) state.setup.streak = false;
+    persist(); render(); return;
+  }
   if (el.id === "group-name") {
     state.group = el.value.trim() || "The usual crowd";
     persist();
