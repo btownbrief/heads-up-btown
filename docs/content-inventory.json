@@ -1,0 +1,373 @@
+{
+  "stats": {
+    "decks": 60,
+    "localDecks": 30,
+    "cardEntries": 3234,
+    "uniqueAnswers": 2932,
+    "forbiddenAnswers": 290,
+    "photos": 38,
+    "levels": 36
+  },
+  "decks": [
+    {
+      "id": "church",
+      "name": "Church Street & downtown",
+      "cards": 63,
+      "forbidden": 5
+    },
+    {
+      "id": "warmup",
+      "name": "The icebreaker",
+      "cards": 75,
+      "forbidden": 26
+    },
+    {
+      "id": "vermont",
+      "name": "Very Vermont",
+      "cards": 53,
+      "forbidden": 16
+    },
+    {
+      "id": "movies",
+      "name": "Movie night",
+      "cards": 85,
+      "forbidden": 44
+    },
+    {
+      "id": "act-general",
+      "name": "Act it out",
+      "cards": 70,
+      "forbidden": 1
+    },
+    {
+      "id": "eat",
+      "name": "Eat your way through Btown",
+      "cards": 62,
+      "forbidden": 3
+    },
+    {
+      "id": "animals",
+      "name": "Animal instincts",
+      "cards": 90,
+      "forbidden": 35
+    },
+    {
+      "id": "songs",
+      "name": "Hum along",
+      "cards": 75,
+      "forbidden": 0
+    },
+    {
+      "id": "only-here",
+      "name": "Only in Burlington",
+      "cards": 60,
+      "forbidden": 0
+    },
+    {
+      "id": "lake",
+      "name": "Lake life",
+      "cards": 45,
+      "forbidden": 5
+    },
+    {
+      "id": "nineties",
+      "name": "90s & 00s kids",
+      "cards": 80,
+      "forbidden": 12
+    },
+    {
+      "id": "kids",
+      "name": "Little legends",
+      "cards": 75,
+      "forbidden": 0
+    },
+    {
+      "id": "act",
+      "name": "Act like a local",
+      "cards": 63,
+      "forbidden": 0
+    },
+    {
+      "id": "newcomer",
+      "name": "New in town",
+      "cards": 58,
+      "forbidden": 39
+    },
+    {
+      "id": "south-end",
+      "name": "South End state of mind",
+      "cards": 29,
+      "forbidden": 0
+    },
+    {
+      "id": "north-end",
+      "name": "North End neighbors",
+      "cards": 27,
+      "forbidden": 1
+    },
+    {
+      "id": "beyond-btown",
+      "name": "Beyond Burlington",
+      "cards": 27,
+      "forbidden": 0
+    },
+    {
+      "id": "cafe",
+      "name": "Coffee, carbs & creemees",
+      "cards": 24,
+      "forbidden": 0
+    },
+    {
+      "id": "night",
+      "name": "One more round",
+      "cards": 27,
+      "forbidden": 0
+    },
+    {
+      "id": "arts",
+      "name": "The creative city",
+      "cards": 28,
+      "forbidden": 1
+    },
+    {
+      "id": "outside",
+      "name": "Get outside, Vermont",
+      "cards": 43,
+      "forbidden": 5
+    },
+    {
+      "id": "landmarks",
+      "name": "Meet me at…",
+      "cards": 42,
+      "forbidden": 6
+    },
+    {
+      "id": "towns",
+      "name": "Name that Vermont town",
+      "cards": 90,
+      "forbidden": 1
+    },
+    {
+      "id": "campus",
+      "name": "Campus creatures",
+      "cards": 65,
+      "forbidden": 3
+    },
+    {
+      "id": "seasons",
+      "name": "The five Vermont seasons",
+      "cards": 70,
+      "forbidden": 9
+    },
+    {
+      "id": "vt-icons",
+      "name": "Vermont icons & oddities",
+      "cards": 65,
+      "forbidden": 10
+    },
+    {
+      "id": "photos",
+      "name": "Btown, in pictures",
+      "cards": 38,
+      "forbidden": 5
+    },
+    {
+      "id": "everyday",
+      "name": "Everyday chaos",
+      "cards": 65,
+      "forbidden": 0
+    },
+    {
+      "id": "jobs",
+      "name": "Who am I, again?",
+      "cards": 70,
+      "forbidden": 2
+    },
+    {
+      "id": "sayings",
+      "name": "You know the saying",
+      "cards": 60,
+      "forbidden": 0
+    },
+    {
+      "id": "food",
+      "name": "Snack attack",
+      "cards": 85,
+      "forbidden": 32
+    },
+    {
+      "id": "sport",
+      "name": "Good sport",
+      "cards": 80,
+      "forbidden": 17
+    },
+    {
+      "id": "nature",
+      "name": "Wild world",
+      "cards": 80,
+      "forbidden": 1
+    },
+    {
+      "id": "tv",
+      "name": "Just one more episode",
+      "cards": 75,
+      "forbidden": 22
+    },
+    {
+      "id": "music",
+      "name": "Main character music",
+      "cards": 85,
+      "forbidden": 23
+    },
+    {
+      "id": "characters",
+      "name": "Fictional friends",
+      "cards": 90,
+      "forbidden": 6
+    },
+    {
+      "id": "games",
+      "name": "Game on",
+      "cards": 80,
+      "forbidden": 15
+    },
+    {
+      "id": "travel",
+      "name": "Out of office",
+      "cards": 70,
+      "forbidden": 11
+    },
+    {
+      "id": "science",
+      "name": "Brainy bunch",
+      "cards": 75,
+      "forbidden": 14
+    },
+    {
+      "id": "holidays",
+      "name": "Reason to celebrate",
+      "cards": 70,
+      "forbidden": 0
+    },
+    {
+      "id": "sugar-season",
+      "name": "Sugaring season",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "winter-kit",
+      "name": "Winter survival kit",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "foliage",
+      "name": "Peak leaf behavior",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "market-basket",
+      "name": "Farmers market basket",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "lake-charades",
+      "name": "Lake day charades",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "btown-commute",
+      "name": "Getting around Btown",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "vermont-dogs",
+      "name": "Vermont dog people",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "btown-host",
+      "name": "Hosting, Vermont style",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "rural-vt",
+      "name": "Back-road Vermont",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "green-mountain-camp",
+      "name": "Green Mountain campout",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "wedding",
+      "name": "Wedding party",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "airport",
+      "name": "Airport energy",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "office",
+      "name": "Office lore",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen confidence",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "superpowers",
+      "name": "Superpower problems",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "space",
+      "name": "Space cadets",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "pet-chaos",
+      "name": "Pet chaos",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "toolbox",
+      "name": "What’s in the toolbox?",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "fairytales",
+      "name": "Once upon a clue",
+      "cards": 36,
+      "forbidden": 0
+    },
+    {
+      "id": "tiny-disasters",
+      "name": "Tiny disasters",
+      "cards": 36,
+      "forbidden": 0
+    }
+  ]
+}

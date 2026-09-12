@@ -1,65 +1,64 @@
-# Heads Up, Burlington
-
-The phone-on-your-forehead guessing game with Burlington decks — a
-[Btown Games](https://play.btownbrief.com/) production from the
-[BTown Brief](https://www.btownbrief.com).
+# Heads Up, Btown!
 
 **Play: https://play.btownbrief.com/heads-up-btown/**
 
-- One player holds the phone on their forehead, screen out. Friends shout
-  clues. **Tilt down** = got it, **tilt up** = pass. Sixty-second rounds (or
-  ninety), a 3-2-1 countdown, then a recap of every card with a one-line
-  "what it is" so the clue-givers can settle the arguments. Share the recap
-  as text.
-- Tilt uses `DeviceOrientation`. iOS asks for motion access once, from the
-  START tap. No sensor, or permission denied, and the round falls back to
-  **tap**: left half passes, right half is got it. Tap mode can also be picked
-  on the home screen. Arrow keys work on a laptop.
-- Rotation-locked phones: if the viewport is portrait but the sensor says the
-  phone is sideways, the card is rotated so it reads upright to the table.
-- Sound is optional and **off by default** (tiny WebAudio beeps, nothing
-  downloaded). The screen wake lock is requested during a round.
-- No server, no accounts, no leaderboard. `localStorage` remembers settings,
-  which cards each deck has already shown (so a table cycles through the
-  whole deck before repeats), and a best score per deck. Keys use the `hub-`
-  prefix.
+A complete device-local party game for Burlington and Vermont. Vanilla JavaScript, no build step, no third-party runtime libraries, no camera/microphone or analytics. Everything under `dist/` is the distributable app.
 
-## Decks
+## Run and verify
 
-`data/decks.json` — six decks, 40–80 cards each. Every card is
-`{ id, t, h, s }`: the text on the card, the one-line hint shown on the
-recap, and where the hint came from (`things.json`, `history-facts.json`,
-`walking-tour.json`, `hobbies.json`, `clubs.json`, `sunset-spots.json`,
-`restaurants.json`, `openings.json`, `sports.json` from the btown-brief
-repo, `archive:YYYY-MM-DD` for a newsletter edition, or a URL).
+```sh
+npm run dev
+npm test
+npm run check
+```
 
-| id | deck | what |
-|---|---|---|
-| `church` | Church Street & Downtown | places, top of Church Street to the lake |
-| `eat` | Eat Btown | dishes and the spots that serve them |
-| `vermont` | Very Vermont | creemee, mud season, sugaring, the mittens |
-| `act` | Act It Out: Burlington | charades prompts |
-| `lake` | Lake Champlain | beaches, boats, wrecks, the monster |
-| `newcomer` | Newcomer Mode | easy, nothing locals-only |
+Development serves `http://localhost:5197`. On a real phone, serve over HTTPS for motion permission, service workers, and wake lock. Tap and keyboard gameplay work without sensors. Open Settings → Enable & test tilt on the phone before using it on your forehead.
 
-Nothing in a hint is invented. If a fact cannot be traced to one of those
-sources, the card gets cut. `DECKS-REVIEW.md` lists the cards that lean on
-an outside URL or that Stephen should eyeball.
+## The game
 
-Run `node scripts/validate-decks.mjs` after any deck edit: it checks card
-counts, unique text per deck, hint length, a known source on every card, and
-that no `[CONFIRM]` marker ships.
+- 60 curated decks: 30 local and 30 general. 3,234 card entries, **2,932 distinct answers** after cross-deck canonicalization. 38 credited local photo cards and 290 distinct answers with hand-authored forbidden clues. Counts are measured, not estimated.
+- Quick play, individual sessions, two teams, and a cooperative target. 2–16 named players for sessions; quick play needs a guesser and friends who give clues. Teams alternate and receive equal turns with uneven rosters. Rounds last 30, 60, 90, or 120 seconds; 1–5 laps. Optional final 30-second lap for competition.
+- Classic, One Clue Each, Forbidden Words, Act it out, One word only, Character voices, Hum along, and Party shuffle. Act/Hum decks keep their rule in Classic. Forbidden and Hum explicitly filter for eligible content. Party shuffle changes rules between turns.
+- Each group name gets device-local answer history across decks and sessions. Common aliases normalize to the same answer. Shown cards, including unanswered last cards, are remembered immediately. **Exhaustion ends the round**; users must deliberately begin a new card cycle. No hidden automatic recycle.
+- Difficulty bands and per-person difficulty/extra time. The optional ramp selects an easy, medium, or hard band according to the current third of the round, with nearest-band fallback when the desired band is exhausted.
+- Optional pass cap/time cost. Streak sparks: +2 seconds starting with the third successive correct answer, capped at +10 seconds, available only in quick/co-op. A 450 ms input guard prevents duplicate scoring from rapid taps.
+- Pause masks the answer, stops the timer, releases the wake lock, and detaches motion sensors. Switching away pauses an active round; countdowns cancel safely. Saved sessions resume after reload. Late events cannot score after the deadline.
+- Passed cards get a tap-to-reveal moment. Review corrects score judgments before continuing. Corrections change points but not time already played. Honor-system challenges can disallow a card without using the microphone.
+- Plain-text/JSON custom deck import, editing, JSON backup/export, and self-contained URL-fragment sharing. 5–500 unique answers, each 1–110 characters. Large links fall back to file export. Shared links are staged for review before saving.
+- Room display: a second tab/window **in the same browser profile**, synchronized through BroadcastChannel, for a projector or extended display. It is not cross-device multiplayer. Keep it behind the guesser. No remote services are involved.
+- Offline save explicitly downloads the app, self-hosted fonts, all decks, and photo assets (~22 MB). Core files also cache on first successful visit. Browser storage must be retained. The public GitHub Pages game requires no login.
 
-## Code
+## Challenge trail
 
-Plain static site — no build step, no dependencies.
+36 levels across six paths: Find your rhythm, The hometown trail, Take the stage, Culture club, Think sideways, and Party legends. Each path starts open; earn one star to unlock its next level. Three score thresholds reward mastery, with personal bests and attempts saved per group. Challenge time and difficulty are fixed; handicaps, time bonuses, and pass penalties do not carry into levels. Progress uses the same group card history as game nights and never silently recycles cards. Levels introduce acting, humming, one-word, clue rotation, and forbidden-word skills.
 
-- `js/engine.js` — pure: seeded shuffle and queue, round state machine,
-  share text, and the tilt maths (`orientationVector`, `feedTilt`). No DOM,
-  no `Date.now()`. Tests: `node scripts/test-engine.mjs`.
-- `js/tilt.js` — permission prompt and the `deviceorientation` listener.
-- `js/sound.js` — WebAudio cues, off until enabled from a tap.
-- `js/main.js` — screens, storage, share, wake lock.
+## Controls
 
-Deployed by GitHub Pages via `.github/workflows/deploy.yml`; `checks.yml`
-runs the syntax check, deck validator and engine tests on every push and PR.
+Tap Pass / Got it; arrow left / right; Space or Escape pauses; Space resumes. N moves to the next clue-giver in One Clue Each. On supported phones, screen down = correct, up = pass, then return upright. Three selectable thresholds with a time-based hold and neutral rearming prevent sustained tilt or momentary nods from repeatedly firing. Sound starts off. Haptics are feature-detected.
+
+## Files and ownership
+
+- `dist/js/engine.js`: pure rules, scoring, queue selection, aliases, schedules, parser, tilt math.
+- `dist/js/main.js`: accessible DOM views, session orchestration, lifecycle, custom editing, room view, browser capabilities.
+- `dist/js/storage.js`: `hub-party-v1` device-local state, separate from the old Heads Up game's keys.
+- `dist/js/decks.js`: checked-in editorial snapshot, with provenance per card.
+- `scripts/build-decks.mjs`: intentional content rebuild from the named Btown repos plus authored general material. **Do not run it unless refreshing content**; it requires those source checkouts.
+- `scripts/prepare-assets.py`: one-time asset import, photo attribution, font download. Requires the named source photo repo.
+- `scripts/prepare-offline.mjs`: regenerate the offline asset manifest if files are added or removed.
+- `docs/content-inventory.json`, `docs/design-decisions.md`, `docs/verification.md`: editorial counts, feedback decisions, and validation evidence.
+
+Source repo files were read and copied; the existing games and newsletter repos were not modified. Source hints with changing hours, prices, and schedules were deliberately not copied into the player flow. Photo originals are unmodified and all licenses are linked in `dist/credits.html`.
+
+## Deliberately excluded from this edition
+
+No microphone auto-advance or automatic banned-word enforcement: a room microphone cannot reliably tell a guesser from overlapping clue-givers. No video recording or automatic highlights, community voting, or live shared authoring. These need separate consent, moderation/storage, and device trials. Custom-file/link sharing and the room's challenge button provide complete simpler alternatives. No forced phone relay during a running clock or random double-point cards; handoffs occur between turns and competitive scoring remains comparable.
+
+## API references
+
+The app feature-detects browser capabilities. See [MDN service worker lifecycle](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers) and the [Device Orientation specification](https://www.w3.org/TR/orientation-event/). Real device motion and haptics must be checked on physical phones; browser-sized screenshots are not sensor tests.
+
+## Publishing and discovery
+
+GitHub Pages publishes only `dist/` after tests and validation pass on `main`. Source snapshots in `data/`, authoring scripts, and internal verification notes are not included in the Pages artifact. The earlier six-deck app remains in Git history before this release. `data/decks.json` and the quarantined source cards remain as authoring inputs, checked separately by `scripts/validate-source-decks.mjs`. The game never reads those snapshots at runtime.
+
+The Arcade entry is in `btownbrief/btownbrief.github.io/games.json`; network search metadata is in `search-index.json`; the described HUB tile is in `btownbrief/hub/index.html`. Keep the public URL stable. The network ticker is hidden in both the round and room-display views.
