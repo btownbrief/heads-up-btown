@@ -1,0 +1,11 @@
+{
+  "name": "heads-up-btown-party",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "check": "node scripts/validate.mjs"
+  }
+}
