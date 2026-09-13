@@ -932,8 +932,8 @@ decks.sort((a, b) => {
 });
 fs.writeFileSync(
   "dist/js/decks.js",
-  "// Editorial snapshot: 2026-09-12. Source provenance retained per card.\nexport const decks=" +
+  "// Editorial snapshot: 2026-09-12. Source provenance retained per card.\nconst originalDecks=" +
     JSON.stringify(decks, null, 1) +
-    ";\nimport { extraDecks } from \"./extra-decks.js\";\ndecks.push(...extraDecks);\n",
+    ";\nimport { extraDecks } from \"./extra-decks.js\";\nimport { organizeDecks } from \"./catalog.js\";\nexport const decks = organizeDecks([...originalDecks, ...extraDecks]);\n",
 );
 await import("./inventory.mjs");

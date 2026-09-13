@@ -16,7 +16,7 @@ All three supplied sets of feedback were reviewed, including the attachment.
 | Pass limits and penalties | Built, both off by default. Challenge is a separate honest-room judgment and can be reviewed after a round. |
 | Better reveal and playback | Card reveal and detailed correction list built. Video not included. |
 | Custom list import, export, link sharing | Built. Review before saving imported/shared content; plain-text/JSON formats; errors for invalid cards; deduplication. |
-| Broad and deep local decks | Built from existing game/place/landmark/photo repos and new curated Vermont-themed material. 30 local collections. |
+| Broad and deep local decks | Built from existing game/place/landmark/photo repos and new curated Vermont-themed material. Eight larger local collections, with 36 general-interest decks leading the library. |
 | Non-text cards | 38 real Burlington photo prompts and a song humming deck. No remote audio playback or photo-identification claim. |
 | Big-group visibility | Same-browser room display for a second monitor/projector. Explicitly not a cross-device room or live online lobby. |
 | Microphone answer detection | Deferred. Speaker ambiguity, near-matches, overlapping voices and browser/network support need actual room trials. Tap/tilt is reliable fallback. |
@@ -33,3 +33,7 @@ The screen is intentionally a deck shelf and play surface rather than a promotio
 ## Expanded goal: levels and breadth
 
 The extension adds 20 authored decks (10 regional and 10 general), bringing the shelf to 60. It adds an actual 36-level challenge trail with six themed paths, fixed time/rules, earned next-level access, three star thresholds, group-specific progress, attempt counts, and personal bests. Every level has enough eligible authored content to reach its gold target. Progress does not clear or circumvent no-repeat memory.
+
+## Everyday-card refresh
+
+Player feedback favored familiar prompts over insider abbreviations and exact phrases. Familiar now excludes difficulty 3 by default, while harder choices remain explicit. Ninety-four displayed entries have clearer wording and stable freshness keys. The library adds 940 authored everyday entries and consolidates the local shelf. Existing group histories are canonicalized without clearing them; saved rounds retain their queue, and merged deck IDs resolve for selections and all 36 levels.

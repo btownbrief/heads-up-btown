@@ -37,10 +37,10 @@ test("fresh queue never recycles; complete exhaustion returns empty", () => {
   );
 });
 test("selected mixed decks deduplicate and filter before randomization", () => {
-  const pool = E.eligibleCards(decks, ["church", "newcomer"]);
+  const pool = E.eligibleCards(decks, ["church", "eat"]);
   assert.equal(new Set(pool.map(E.cardKey)).size, pool.length);
   assert(pool.some((c) => c.deckId === "church"));
-  assert(pool.some((c) => c.deckId === "newcomer"));
+  assert(pool.some((c) => c.deckId === "eat"));
   const hard = E.eligibleCards(
     decks,
     decks.map((d) => d.id),

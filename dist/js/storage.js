@@ -1,7 +1,10 @@
+import { resolveDeckIds } from './catalog.js';
+import { cardKey } from './engine.js';
 const KEY = "hub-party-v1";
 export const defaults = {
+  catalogVersion: 2,
   group: "The usual crowd",
-  selected: ["church", "warmup"],
+  selected: ["warmup"],
   filter: "all",
   custom: [],
   groups: {},
@@ -17,7 +20,7 @@ export const defaults = {
     mode: "quick",
     seconds: 60,
     rounds: 2,
-    difficulty: "mixed",
+    difficulty: "familiar",
     rule: "classic",
     passLimit: 0,
     passPenalty: 0,
@@ -43,19 +46,39 @@ export const defaults = {
     teamNames: ["Lake Monsters", "Mountain Goats"],
   },
 };
+export function migrateCatalogState(state) {
+  if ((state.catalogVersion || 0) >= 2) return state;
+  state.selected = resolveDeckIds(Array.isArray(state.selected) ? state.selected : defaults.selected);
+  // Existing rounds keep their original queue, clock, and rules. Future turns can
+  // resolve the retired deck IDs; group history and challenge records stay intact.
+  if (Array.isArray(state.session?.deckIds)) state.session.deckIds = resolveDeckIds(state.session.deckIds);
+  if (state.setup.difficulty === 'mixed') state.setup.difficulty = 'familiar';
+  for (const group of Object.values(state.groups)) {
+    if (!group || typeof group !== 'object') continue;
+    const seen = new Map();
+    for (const [oldKey, record] of Object.entries(group.seen || {})) {
+      const key = cardKey({t:oldKey});
+      if (!seen.has(key) || (record?.at || 0) > (seen.get(key)?.at || 0)) seen.set(key, record);
+    }
+    group.seen = Object.fromEntries(seen);
+  }
+  state.catalogVersion = 2;
+  return state;
+}
 export function loadState() {
   try {
     const x = JSON.parse(localStorage.getItem(KEY));
     if (!x || typeof x !== "object") return structuredClone(defaults);
-    return {
+    return migrateCatalogState({
       ...structuredClone(defaults),
       ...x,
+      catalogVersion: x.catalogVersion || 0,
       settings: { ...defaults.settings, ...x.settings },
       setup: { ...structuredClone(defaults.setup), ...x.setup },
       custom: Array.isArray(x.custom) ? x.custom : [],
       history: Array.isArray(x.history) ? x.history : [],
       groups: x.groups && typeof x.groups === "object" ? x.groups : {},
-    };
+    });
   } catch {
     return structuredClone(defaults);
   }

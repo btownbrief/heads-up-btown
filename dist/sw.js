@@ -9,6 +9,8 @@ const CORE = [
   "./js/ui.js",
   "./js/decks.js",
   "./js/extra-decks.js",
+  "./js/general-decks.js",
+  "./js/catalog.js",
   "./js/levels.js",
   "./js/engine.js",
   "./js/storage.js",
