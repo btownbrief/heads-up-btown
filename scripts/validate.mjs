@@ -36,11 +36,35 @@ for (const d of decks) {
 const files = JSON.parse(fs.readFileSync("dist/offline-files.json", "utf8"));
 for (const f of files)
   assert(fs.existsSync("dist/" + f.slice(2)), "Missing offline asset " + f);
+const walk = (dir) =>
+  fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap((e) =>
+      e.isDirectory() ? walk(dir + "/" + e.name) : [dir + "/" + e.name],
+    );
+const listed = new Set(files);
+const skip = new Set(["dist/sw.js", "dist/offline-files.json"]);
+for (const p of walk("dist"))
+  assert(
+    skip.has(p) || listed.has("./" + p.slice(5)),
+    "Shipped file missing from offline-files.json: " + p,
+  );
+const core = [
+  ...fs
+    .readFileSync("dist/sw.js", "utf8")
+    .match(/const CORE = \[([\s\S]*?)\];/)[1]
+    .matchAll(/"([^"]+)"/g),
+].map((m) => m[1]);
+for (const f of core)
+  assert(
+    f === "./" || fs.existsSync("dist/" + f.slice(2)),
+    "Service worker caches a file that is not in dist: " + f,
+  );
 for (const file of ["dist/index.html", "dist/credits.html"]) {
   const text = fs.readFileSync(file, "utf8");
   for (const m of text.matchAll(/(?:href|src)="\.\/([^"#?]+)"/g))
     assert(fs.existsSync("dist/" + m[1]), "Broken local reference " + m[1]);
 }
 console.log(
-  `Validated ${decks.length} decks, ${decks.reduce((n, d) => n + d.cards.length, 0)} card entries, ${files.length} offline files, and both HTML entrypoints.`,
+  `Validated ${decks.length} decks, ${decks.reduce((n, d) => n + d.cards.length, 0)} card entries, ${files.length} offline files, ${core.length} shell entries, and both HTML entrypoints.`,
 );

@@ -29,9 +29,9 @@ let countdownUntil = 0,
   timer = null,
   countdownId = null,
   wakeLock = null,
+  wakeGeneration = 0,
   audio = null,
-  lastTickSound = -1,
-  lastSaved = 0;
+  lastTickSound = -1;
 let tilt = { armed: false, dir: 0, since: 0 },
   motionSamples = 0,
   motionPermission = false,
@@ -158,6 +158,11 @@ function render() {
 }
 function goto(s) {
   screen = s;
+  calibrating = false;
+  if (s !== "playing") {
+    clearInterval(timer);
+    timer = null;
+  }
   render();
   window.scrollTo(0, 0);
   document.querySelector("#main")?.focus({preventScroll:true});
@@ -359,6 +364,11 @@ function resumeSession() {
     s.round = E.pauseRound(s.round, Date.now());
     return goto("paused");
   }
+  if (extending) {
+    s.deckIds = [...state.selected];
+    extending = false;
+    persist();
+  }
   goto("ready");
 }
 function roundView() {
@@ -367,12 +377,12 @@ function roundView() {
   const cfg = playerConfig(s), r = s.round, rule = RULES[cfg.rule], total = s.schedule.length;
   const turn = total > 1 ? `Turn ${s.turn+1} of ${total}` : '';
   const team = s.mode === 'teams' ? s.teamNames[p.team === 'A' ? 0 : 1] : '';
-  if (screen === 'ready') return `<main id="main" class="ready-screen"><div class="play-topbar"><button class="text-button" data-action="save-exit">${ic('back')} Save & leave</button><span>${turn}</span><button class="icon-button" aria-label="Game settings" data-action="settings">${ic('settings')}</button></div><div class="ready-content"><div class="ready-phone">${ic('phone')}</div><h1>${esc(p.name)}, you're up.</h1><p class="ready-direction">Phone to your forehead.<br>${team ? `${esc(team)} gives the clues.` : 'Your friends give the clues.'}</p>${s.levelId ? `<p class="level-ready-target">${esc(levelById(s.levelId).name)}<span>★ ${levelById(s.levelId).targets[0]} · ★★ ${levelById(s.levelId).targets[1]} · ★★★ ${levelById(s.levelId).targets[2]} correct</span></p>` : ''}<div class="instruction-card"><div class="ready-facts"><b>${rule.name}</b><span>${cfg.seconds} seconds${s.config.lightning && s.schedule[s.turn].lap === s.config.rounds-1 ? ' · Lightning' : ''}</span></div><p>${esc(rule.hint)}</p>${s.deckIds.some(id => deckById(id)?.rule) ? '<small>Acting and humming decks keep their own clue style.</small>' : ''}</div><button class="button full" data-action="begin-countdown">I'm ready</button><p class="footnote">${state.settings.control === 'tilt' ? 'Tilt down for correct, up to pass. Return upright.' : 'A clue-giver taps. Same idea counts.'}</p></div></main>`;
-  if (screen === 'countdown') return `<main class="countdown-screen" id="main"><button class="text-button countdown-cancel" data-action="cancel-countdown">${ic('close')} Cancel</button><div><p>Screen toward your friends</p><div class="countdown-number" id="countdown-number">${Math.max(1,Math.ceil((countdownUntil-Date.now())/1000))}</div></div></main>`;
-  if (screen === 'paused') return `<main class="pause-screen" id="main"><div><span class="pause-symbol">${ic('pause')}</span><h1>Paused</h1><p>${E.secondsLeft(r,Date.now())} seconds left · ${r.score} correct</p><div class="pause-actions">${button('Resume','resume-round')}${button('Save & leave','save-exit','secondary')}<details class="pause-more disclosure"><summary>More ${ic('chevron')}</summary><div class="disclosure-body">${button('Challenge a clue','challenge','outline full')}${button('End round','end-round','outline full')}</div></details></div></div></main>`;
+  if (screen === 'ready') return `<main id="main" class="ready-screen" tabindex="-1"><div class="play-topbar"><button class="text-button" data-action="save-exit">${ic('back')} Save & leave</button><span>${turn}</span><button class="icon-button" aria-label="Game settings" data-action="settings">${ic('settings')}</button></div><div class="ready-content"><div class="ready-phone">${ic('phone')}</div><h1>${esc(p.name)}, you're up.</h1><p class="ready-direction">Phone to your forehead.<br>${team ? `${esc(team)} gives the clues.` : 'Your friends give the clues.'}</p>${s.levelId ? `<p class="level-ready-target">${esc(levelById(s.levelId).name)}<span>★ ${levelById(s.levelId).targets[0]} · ★★ ${levelById(s.levelId).targets[1]} · ★★★ ${levelById(s.levelId).targets[2]} correct</span></p>` : ''}<div class="instruction-card"><div class="ready-facts"><b>${rule.name}</b><span>${cfg.seconds} seconds${s.config.lightning && s.schedule[s.turn].lap === s.config.rounds-1 ? ' · Lightning' : ''}</span></div><p>${esc(rule.hint)}</p>${s.deckIds.some(id => deckById(id)?.rule) ? '<small>Acting and humming decks keep their own clue style.</small>' : ''}</div><button class="button full" data-action="begin-countdown">I'm ready</button><p class="footnote">${state.settings.control === 'tilt' ? 'Tilt down for correct, up to pass. Return upright.' : 'A clue-giver taps. Same idea counts.'}</p></div></main>`;
+  if (screen === 'countdown') return `<main class="countdown-screen" id="main" tabindex="-1"><button class="text-button countdown-cancel" data-action="cancel-countdown">${ic('close')} Cancel</button><div><p>Screen toward your friends</p><div class="countdown-number" id="countdown-number">${Math.max(1,Math.ceil((countdownUntil-Date.now())/1000))}</div></div></main>`;
+  if (screen === 'paused') return `<main class="pause-screen" id="main" tabindex="-1"><div><span class="pause-symbol">${ic('pause')}</span><h1>Paused</h1><p>${E.secondsLeft(r,Date.now())} seconds left · ${r.score} correct</p><div class="pause-actions">${button('Resume','resume-round')}${button('Save & leave','save-exit','secondary')}<details class="pause-more disclosure"><summary>More ${ic('chevron')}</summary><div class="disclosure-body">${button('Challenge a clue','challenge','outline full')}${button('End round','end-round','outline full')}</div></details></div></div></main>`;
   const card = r.queue[r.index], liveRule = effectiveRule(card,cfg.rule);
   const cluer = clueGivers()[clueIndex % Math.max(1,clueGivers().length)], voice = voices[(r.index+s.turn)%voices.length];
-  return `<main class="play-screen" id="main"><div class="play-topbar"><span><b>${esc(p.name)}</b>${team ? ` · ${esc(team)}` : ''}</span><span class="round-rule">${RULES[liveRule].name}</span><button class="icon-button" aria-label="Pause round" data-action="pause">${ic('pause')}</button></div><div class="time-track"><div id="time-bar" style="width:${Math.min(100,E.secondsLeft(r,Date.now())/r.baseSeconds*100)}%"></div></div><div class="game-hud"><span class="score-pill"><b id="round-score">${r.score}</b> correct</span><div class="timer" id="game-timer" aria-label="Seconds remaining">${E.secondsLeft(r,Date.now())}</div><span class="streak-pill">${r.streak >= 3 ? `${r.streak} in a row` : ''}${r.bonus ? ` · +${r.bonus}s` : ''}</span></div><div class="answer-stage ${card.image ? 'photo-stage' : ''}"><div class="card-category">${esc(card.deckName)}</div>${card.image ? `<img class="photo-prompt" src="./${card.image}" alt="Photo clue: ${esc(card.t)}">` : ''}<h1 class="answer ${card.t.length > 44 ? 'answer-long' : ''}" id="answer">${esc(card.t)}</h1>${liveRule === 'forbidden' ? `<div class="forbidden"><span>Don't say</span>${card.ban.map(w => `<b>${esc(w)}</b>`).join('')}</div>` : ''}${liveRule === 'one' ? `<div class="clue-rotation"><span>One clue from <b>${esc(cluer?.name || 'the next person')}</b></span><button data-action="next-cluer" aria-label="Next clue-giver or skip me">Next / skip ${ic('chevron')}</button></div>` : ''}${liveRule === 'accent' ? `<div class="voice-prompt"><span>Voice: <b>${esc(voice)}</b></span><button class="text-button" data-action="skip-voice">Change</button></div>` : ''}${['act','hum','word'].includes(liveRule) ? `<p class="live-rule-note">${esc(RULES[liveRule].hint)}</p>` : ''}</div><div class="game-actions"><button class="pass-button" data-action="pass" ${r.options.passLimit && r.passes >= r.options.passLimit ? 'disabled' : ''}>${ic('arrow')}<b>Pass</b>${r.options.passLimit || r.options.passPenalty ? `<small>${r.options.passLimit ? `${Math.max(0,r.options.passLimit-r.passes)} left` : ''}${r.options.passPenalty ? ` · −${r.options.passPenalty}s` : ''}</small>` : ''}</button><button class="got-button" data-action="got">${ic('check')}<b>Correct</b></button></div><div class="game-foot">${state.settings.control === 'tilt' ? 'Tilt down: correct · Tilt up: pass' : '<span class="keyboard-hint">← Pass · → Correct · Space to pause</span>'}</div><div class="score-flash" id="score-flash" aria-live="polite"></div></main>`;
+  return `<main class="play-screen" id="main" tabindex="-1"><div class="play-topbar"><span><b>${esc(p.name)}</b>${team ? ` · ${esc(team)}` : ''}</span><span class="round-rule">${RULES[liveRule].name}</span><button class="icon-button" aria-label="Pause round" data-action="pause">${ic('pause')}</button></div><div class="time-track"><div id="time-bar" style="width:${Math.min(100,E.secondsLeft(r,Date.now())/r.baseSeconds*100)}%"></div></div><div class="game-hud"><span class="score-pill"><b id="round-score">${r.score}</b> correct</span><div class="timer" id="game-timer" aria-label="Seconds remaining">${E.secondsLeft(r,Date.now())}</div><span class="streak-pill">${r.streak >= 3 ? `${r.streak} in a row` : ''}${r.bonus ? ` · +${r.bonus}s` : ''}</span></div><div class="answer-stage ${card.image ? 'photo-stage' : ''}"><div class="card-category">${esc(card.deckName)}</div>${card.image ? `<img class="photo-prompt" src="./${card.image}" alt="Photo clue: ${esc(card.t)}">` : ''}<h1 class="answer ${card.t.length > 44 ? 'answer-long' : ''}" id="answer">${esc(card.t)}</h1>${liveRule === 'forbidden' ? `<div class="forbidden"><span>Don't say</span>${card.ban.map(w => `<b>${esc(w)}</b>`).join('')}</div>` : ''}${liveRule === 'one' ? `<div class="clue-rotation"><span>One clue from <b>${esc(cluer?.name || 'the next person')}</b></span><button data-action="next-cluer" aria-label="Next clue-giver or skip me">Next / skip ${ic('chevron')}</button></div>` : ''}${liveRule === 'accent' ? `<div class="voice-prompt"><span>Voice: <b>${esc(voice)}</b></span><button class="text-button" data-action="skip-voice">Change</button></div>` : ''}${['act','hum','word'].includes(liveRule) ? `<p class="live-rule-note">${esc(RULES[liveRule].hint)}</p>` : ''}</div><div class="game-actions"><button class="pass-button" data-action="pass" ${r.options.passLimit && r.passes >= r.options.passLimit ? 'disabled' : ''}>${ic('arrow')}<b>Pass</b>${r.options.passLimit || r.options.passPenalty ? `<small>${r.options.passLimit ? `${Math.max(0,r.options.passLimit-r.passes)} left` : ''}${r.options.passPenalty ? ` · −${r.options.passPenalty}s` : ''}</small>` : ''}</button><button class="got-button" data-action="got">${ic('check')}<b>Correct</b></button></div><div class="game-foot">${state.settings.control === 'tilt' ? 'Tilt down: correct · Tilt up: pass' : '<span class="keyboard-hint">← Pass · → Correct · Space to pause</span>'}</div><div class="score-flash" id="score-flash" aria-live="polite"></div></main>`;
 }
 function effectiveRule(card, rule) {
   return rule === "classic" && card?.deckRule ? card.deckRule : rule;
@@ -479,18 +489,26 @@ function handleMotion(e) {
   if (next.gesture) mark(next.gesture);
 }
 async function requestWake() {
+  const token = ++wakeGeneration;
   try {
-    if ("wakeLock" in navigator)
-      wakeLock = await navigator.wakeLock.request("screen");
+    if (!("wakeLock" in navigator)) return;
+    const lock = await navigator.wakeLock.request("screen");
+    if (token !== wakeGeneration) {
+      lock.release().catch(() => {});
+      return;
+    }
+    wakeLock = lock;
   } catch {}
 }
 function releaseWake() {
+  wakeGeneration++;
   wakeLock?.release().catch(() => {});
   wakeLock = null;
 }
 async function beginCountdown() {
   const s = state.session;
   if (!s) return;
+  calibrating = false;
   const cfg = playerConfig(s);
   if (!fresh(cfg, s.deckIds).length) {
     modal(
@@ -529,6 +547,7 @@ async function beginCountdown() {
   }, 80);
 }
 function startRound() {
+  calibrating = false;
   const s = state.session,
     cfg = playerConfig(s),
     queue = E.freshQueue(
@@ -591,10 +610,6 @@ function startTicker() {
       sound("tick");
       lastTickSound = n;
     }
-    if (now - lastSaved > 3000) {
-      persist();
-      lastSaved = now;
-    }
     broadcast();
   }, 100);
 }
@@ -613,9 +628,12 @@ function mark(verdict) {
   s.round = E.scoreCard(old, verdict, Date.now());
   if (s.round === old) return;
   if (s.round.results.length > old.results.length) {
-    markSeen(state, E.cardKey(old.queue[old.index]), verdict);
-    sound(verdict);
-    vibrate(verdict === "got" ? 45 : [20, 40, 20]);
+    const actual = s.round.results[s.round.results.length - 1].verdict;
+    markSeen(state, E.cardKey(old.queue[old.index]), actual);
+    if (actual !== "unanswered") {
+      sound(actual);
+      vibrate(actual === "got" ? 45 : [20, 40, 20]);
+    }
   }
   if (s.round.phase === "done") {
     finishTurn();
@@ -1083,10 +1101,10 @@ function broadcast(force = false) {
 }
 function renderRoom(data) {
   if (!data) {
-    root.innerHTML = `<main class="room-screen" id="main"><div class="room-wait"><span class="brand-mark">h!</span><h1>The room is ready.</h1><p>Open the game in another tab in this same browser.<br>Your timer, cards, and scoreboard will appear here.</p><p class="small muted">Keep this display behind the guesser. It shows the answer.</p>${button("Full screen", "fullscreen", "outline")}</div></main>`;
+    root.innerHTML = `<main class="room-screen" id="main" tabindex="-1"><div class="room-wait"><span class="brand-mark">h!</span><h1>The room is ready.</h1><p>Open the game in another tab in this same browser.<br>Your timer, cards, and scoreboard will appear here.</p><p class="small muted">Keep this display behind the guesser. It shows the answer.</p>${button("Full screen", "fullscreen", "outline")}</div></main>`;
     return;
   }
-  root.innerHTML = `<main class="room-screen" id="main"><div class="room-top"><span class="brand">heads up, btown!</span><span>${esc(data.group)}</span><div>${button(roomHidden ? "Show answers" : "Hide answers", "room-hide", "outline")}${button(ic("expand") + '<span class="sr-only">Full screen</span>', "fullscreen", "outline")}</div></div><div class="room-content"><div class="eyebrow">${data.player ? `${esc(data.player)} · TURN ${data.turn}/${data.turns}` : "GATHER YOUR PEOPLE"}</div><div class="room-timer">${data.phase === "playing" ? data.seconds : ""}</div>${data.card && !roomHidden ? `${data.card.image ? `<img class="room-photo" src="./${esc(data.card.image)}" alt="${esc(data.card.t)}">` : ""}<h1>${esc(data.card.t)}</h1>${data.card.ban?.length ? `<div class="forbidden"><span>DON'T SAY</span>${data.card.ban.map((x) => `<b>${esc(x)}</b>`).join("")}</div>` : ""}` : `<h1>${data.phase === "paused" ? "Taking a breather." : data.phase === "countdown" ? "Here we go…" : data.phase === "recap" ? "What a round." : data.phase === "finish" ? "That’s a game night." : roomHidden ? "All eyes on the guesser." : "Good company. Great guesses."}</h1>`}<p>${esc(data.rule || "Choose your decks in the game tab.")}</p></div><div class="room-scores">${(data.scores || []).map((p) => `<div><span>${esc(p.name)}</span><b>${p.score}</b></div>`).join("")}</div><p class="room-note">Same-browser room display · Place behind the guesser · No microphone or camera</p></main>`;
+  root.innerHTML = `<main class="room-screen" id="main" tabindex="-1"><div class="room-top"><span class="brand">heads up, btown!</span><span>${esc(data.group)}</span><div>${button(roomHidden ? "Show answers" : "Hide answers", "room-hide", "outline")}${button(ic("expand") + '<span class="sr-only">Full screen</span>', "fullscreen", "outline")}</div></div><div class="room-content"><div class="eyebrow">${data.player ? `${esc(data.player)} · TURN ${data.turn}/${data.turns}` : "GATHER YOUR PEOPLE"}</div><div class="room-timer">${data.phase === "playing" ? data.seconds : ""}</div>${data.card && !roomHidden ? `${data.card.image ? `<img class="room-photo" src="./${esc(data.card.image)}" alt="${esc(data.card.t)}">` : ""}<h1>${esc(data.card.t)}</h1>${data.card.ban?.length ? `<div class="forbidden"><span>DON'T SAY</span>${data.card.ban.map((x) => `<b>${esc(x)}</b>`).join("")}</div>` : ""}` : `<h1>${data.phase === "paused" ? "Taking a breather." : data.phase === "countdown" ? "Here we go…" : data.phase === "recap" ? "What a round." : data.phase === "finish" ? "That’s a game night." : roomHidden ? "All eyes on the guesser." : "Good company. Great guesses."}</h1>`}<p>${esc(data.rule || "Choose your decks in the game tab.")}</p></div><div class="room-scores">${(data.scores || []).map((p) => `<div><span>${esc(p.name)}</span><b>${p.score}</b></div>`).join("")}</div><p class="room-note">Same-browser room display · Place behind the guesser · No microphone or camera</p></main>`;
 }
 channel?.addEventListener("message", (e) => {
   if (e.data?.type === "request" && !isRoom) broadcast(true);
@@ -1102,6 +1120,56 @@ async function offline() {
     button("Save / check offline files", "save-offline", "dark"),
   );
 }
+const CACHE_PREFIX = "hub-party-content-";
+const readyMarker = () => new URL("./offline-ready", location.href);
+const hadController = Boolean(navigator.serviceWorker?.controller);
+let updateNoticeShown = false;
+// The worker owns the cache name; the page asks for it rather than repeating it.
+async function contentCacheName(reg) {
+  const worker = reg?.active || navigator.serviceWorker.controller;
+  if (worker)
+    try {
+      return await new Promise((resolve, reject) => {
+        const channel = new MessageChannel();
+        const timer = setTimeout(() => reject(new Error("No reply")), 3000);
+        channel.port1.onmessage = (event) => {
+          clearTimeout(timer);
+          resolve(event.data?.cache);
+        };
+        worker.postMessage({ type: "cache-name" }, [channel.port2]);
+      });
+    } catch {}
+  const keys = await caches.keys();
+  return keys
+    .filter((k) => k.startsWith(CACHE_PREFIX))
+    .sort()
+    .pop();
+}
+// The saved marker records which file list was saved, so a new build reports
+// itself as unsaved instead of claiming stale files are ready.
+async function offlineDigest() {
+  const text = await fetch("./offline-files.json").then((r) => r.text());
+  const bytes = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)),
+  );
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+function watchForUpdate(reg) {
+  reg.addEventListener("updatefound", () => {
+    const next = reg.installing;
+    if (!next || !navigator.serviceWorker.controller) return;
+    next.addEventListener("statechange", () => {
+      if (next.state !== "installed" || updateNoticeShown) return;
+      updateNoticeShown = true;
+      toast("New version — reload to update.");
+    });
+  });
+}
+navigator.serviceWorker?.addEventListener("controllerchange", () => {
+  if (!hadController || updateNoticeShown) return;
+  updateNoticeShown = true;
+  toast("New version — reload to update.");
+});
 async function saveOffline() {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) {
     toast("Offline saving needs HTTPS or localhost in a supported browser.");
@@ -1110,9 +1178,14 @@ async function saveOffline() {
   offlineStatus = "saving";
   try {
     const reg = await navigator.serviceWorker.register("./sw.js");
+    watchForUpdate(reg);
     await navigator.serviceWorker.ready;
+    const digest = await offlineDigest();
+    const name = await contentCacheName(reg);
+    if (!name) throw new Error("No content cache is available yet.");
     const list = await fetch("./offline-files.json").then((r) => r.json());
-    const cache = await caches.open("hub-party-content-v1");
+    const cache = await caches.open(name);
+    await cache.delete(readyMarker());
     const settled = await Promise.allSettled(
       list.map(async (file) => {
         const url = new URL(file, location.href);
@@ -1124,10 +1197,10 @@ async function saveOffline() {
     );
     if (settled.some((x) => x.status === "rejected"))
       throw new Error("Some files could not be saved.");
-    await cache.put(
-      new URL("./offline-ready", location.href),
-      new Response("ready"),
-    );
+    for (const file of list)
+      if (!(await cache.match(new URL(file, location.href))))
+        throw new Error("Missing after save: " + file);
+    await cache.put(readyMarker(), new Response(digest));
     offlineStatus = "ready";
     const el = document.querySelector("#offline-message");
     if (el)
@@ -1149,11 +1222,16 @@ async function offlineInit() {
     return;
   }
   try {
-    await navigator.serviceWorker.register("./sw.js");
-    const c = await caches.open("hub-party-content-v1");
-    offlineStatus = (await c.match(new URL("./offline-ready", location.href)))
-      ? "ready"
-      : "available";
+    const reg = await navigator.serviceWorker.register("./sw.js");
+    watchForUpdate(reg);
+    const name = await contentCacheName(reg);
+    const marker = name
+      ? await (await caches.open(name)).match(readyMarker())
+      : null;
+    offlineStatus =
+      marker && (await marker.text()) === (await offlineDigest())
+        ? "ready"
+        : "available";
   } catch {
     offlineStatus = "unsupported";
   }

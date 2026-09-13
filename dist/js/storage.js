@@ -78,6 +78,10 @@ export function loadState() {
       custom: Array.isArray(x.custom) ? x.custom : [],
       history: Array.isArray(x.history) ? x.history : [],
       groups: x.groups && typeof x.groups === "object" ? x.groups : {},
+      group:
+        typeof x.group === "string" && x.group.trim()
+          ? x.group
+          : defaults.group,
     });
   } catch {
     return structuredClone(defaults);
