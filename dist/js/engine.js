@@ -6,7 +6,7 @@ export const normalize = (value) =>
     .toLowerCase()
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9 ]/g, "")
-    .replace(/^the /, "")
+    .replace(/^(?:the|an|a) /, "")
     .replace(/\s+/g, " ")
     .trim();
 const aliases = new Map();
@@ -35,7 +35,7 @@ for (const group of [
   ["Catamounts", "The Catamounts", "UVM Catamounts"],
   ["The Gut", "Gutterson Fieldhouse", "UVM Hockey at Gutterson Fieldhouse"],
   ["The FRAME", "The Moran FRAME", "The Moran Frame"],
-  ["ECHO", "ECHO Leahy Center for Lake Champlain"],
+  ["ECHO", "ECHO Leahy Center for Lake Champlain", "ECHO & the Boathouse", "ECHO science museum"],
   ["Red Rocks", "Red Rocks Park"],
   ["The Unitarian Church", "First Unitarian Universalist"],
   ["Lake Champlain Chocolates", "Lake Champlain Chocolates (Factory Store)"],
@@ -44,7 +44,7 @@ for (const group of [
   ["Switchback", "Switchback Brewing Co."],
   ["The Alchemist", "The Alchemist Brewery"],
   ["Hill Farmstead", "Hill Farmstead Brewery"],
-  ["BCA Center", "BCA Center (old Firehouse)"],
+  ["BCA Center", "BCA Center (old Firehouse)", "Burlington City Arts"],
   ["Leunig's Bistro", "Leunig's Bistro & Café"],
   ["American Flatbread", "American Flatbread (Burlington Hearth)"],
   ["August First", "August First Bakery & Café"],
@@ -63,10 +63,19 @@ for (const group of [
   ["Spirit of Ethan Allen", "Spirit of Ethan Allen III"],
   ["The Donahue Sea Caves", "Donahue Sea Caves (Winter)"],
   ["Whistling Man Schooner", "Whistling Man Schooner Company"],
+  ["Burlington International Airport", "BTV Airport"],
+  ["Lobster roll", "Lobster roll at Shanty"],
+  ["Bird-watching", "Bird-watching at Delta Park"],
+  ["Ice fishing", "Ice fishing in a shanty on Malletts Bay"],
+  ["A self-checkout error", "A self-checkout unexpected item"],
+  ["E.T.", "E.T. the Extra-Terrestrial"],
+  ["Up", "Up (the movie)"], ["Elf", "Elf (the movie)"],
+  ["U2", "U2 (the band)"], ["ABBA", "ABBA (the band)"],
+  ["YMCA", "YMCA (the song)"], ["DNA", "DNA (genetic material)"],
 ])
   for (const name of group) aliases.set(normalize(name), normalize(group[0]));
 export const cardKey = (card) =>
-  aliases.get(normalize(card.t)) || normalize(card.t);
+  aliases.get(normalize(card.answerKey || card.t)) || normalize(card.answerKey || card.t);
 export function uniqueCards(cards) {
   const seen = new Set();
   return cards.filter((c) => {
@@ -103,6 +112,7 @@ export function eligibleCards(
       .filter(
         (c) =>
           (difficulty === "mixed" ||
+            (difficulty === "familiar" && c.d <= 2) ||
             difficulty === "ramp" ||
             c.d === Number(difficulty)) &&
           (rule !== "forbidden" || c.ban?.length === 3) &&

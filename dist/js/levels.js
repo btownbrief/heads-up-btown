@@ -1,3 +1,4 @@
+import { resolveDeckIds } from './catalog.js';
 // Six themed paths. Each step introduces a different skill; no paid unlocks.
 export const chapters = [
   {
@@ -219,7 +220,7 @@ export const levels = chapters.flatMap((chapter, chapterIndex) =>
       number: chapterIndex * 6 + index + 1,
       index,
       name,
-      deckIds,
+      deckIds: resolveDeckIds(deckIds),
       rule,
       difficulty,
       seconds,

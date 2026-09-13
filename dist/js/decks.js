@@ -1,5 +1,5 @@
 // Editorial snapshot: 2026-09-12. Source provenance retained per card.
-export const decks = [
+const originalDecks = [
   {
     id: "church",
     name: "Church Street & downtown",
@@ -16597,4 +16597,5 @@ export const decks = [
 ];
 
 import { extraDecks } from "./extra-decks.js";
-decks.push(...extraDecks);
+import { organizeDecks } from "./catalog.js";
+export const decks = organizeDecks([...originalDecks, ...extraDecks]);

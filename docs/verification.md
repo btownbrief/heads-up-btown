@@ -60,3 +60,19 @@ Manually checked the redesigned interface in the in-app browser at desktop width
 - Browser error logs were empty. Body width matched the viewport in narrow portrait and landscape checks. Physical motion and sensor acceptance remain separate, as above.
 
 The final validation includes all 28 engine/progression tests, the source and runtime deck validators, all tracked JavaScript syntax checks, and a clean whitespace check. No gameplay engine or card-content changes were needed for this redesign.
+
+## Broader, easier decks — September 12, 2026
+
+The catalog now contains 44 decks: 36 general decks and eight larger local collections. It has 4,075 entries, 3,786 canonical answers, 347 distinct answers with forbidden clues, and the same 38 credited photographs. This refresh adds 940 entries and rewords 94 displayed entries. All general decks contain at least 60 cards; local text collections contain 99–252 cards.
+
+Familiar is the default difficulty and includes 2,872 distinct Easy/Medium answers. Specialist local prompts move to Hard, short ambiguous titles and acronyms get context, and long actions use simpler wording. The help explicitly accepts equivalent answers. Retired deck IDs resolve to their new collections, while saved histories migrate to stable canonical answer keys. Existing active rounds, scores, custom decks, and challenge progress are preserved.
+
+All 33 tests pass, including five new tests for Familiar filtering, catalog balance, saved-state migration, canonical history, and the distinction between familiar short words and insider abbreviations. Both content validators and JavaScript syntax checks pass. The canonical-answer audit found no identical displayed answers with different keys. The CI test entry point includes the new catalog suite.
+
+In the in-app browser at 390 × 844:
+
+- Verified the general-first library, six new decks, 36 general / eight local count, and Familiar default. Switching to All cards updates the setup description immediately.
+- Played a natural 30-second Around the house round through correct, pass, time up, passed-card reveal, and share-text review. The recap recorded Feather duster as correct, Recycling bin as passed, and Porch as unanswered.
+- Saved all 61 offline files, stopped the isolated server, confirmed connection refusal, and reloaded successfully. Played and scored another round with the server still off.
+- Opened the migrated Welcome to Btown challenge offline, scored three, finalized one star, and reloaded. The best score and star persisted, the next level unlocked, and later levels stayed locked.
+- Confirmed no horizontal overflow and empty browser error logs. Physical tilt acceptance remains separate from these browser checks.
