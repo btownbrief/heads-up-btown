@@ -54,7 +54,9 @@ test('the broader catalog is substantial and all retired level selections resolv
   const general=decks.filter(d=>d.group!=='local'),local=decks.filter(d=>d.group==='local');
   assert.equal(general.length,36);assert.equal(local.length,8);
   assert(general.every(d=>d.cards.length>=60));
-  assert(local.filter(d=>!d.photo).every(d=>d.cards.length>=90));
+  // The local minimum was written when the local decks still carried unreviewed bulk imports.
+  // The 2026-09-20 content pass cut those, and `lake` lost the 36 camp cards that never fit it.
+  assert(local.filter(d=>!d.photo).every(d=>d.cards.length>=50));
   assert.equal(decks.find(d=>d.id==='photos').cards.length,38);
   const ids=new Set(decks.map(d=>d.id));
   for(const level of levels) assert(level.deckIds.every(id=>ids.has(id)),level.id);

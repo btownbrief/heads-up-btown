@@ -8,7 +8,7 @@
 
 ## Browser playtests
 
-Performed in the Codex in-app browser, with local static servers and actual UI interaction:
+Performed in the in-app browser, with local static servers and actual UI interaction:
 
 - Inspected the desktop library, mobile portrait (390 × 844), and landscape play (844 × 390). Card text, forbidden words, timer, and controls remain readable.
 - Checked the published library and a 325-pixel narrow preview; corrected the game-night action so it sits below the description without covering the heading.

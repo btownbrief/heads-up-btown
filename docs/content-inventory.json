@@ -2,9 +2,9 @@
   "stats": {
     "decks": 44,
     "localDecks": 8,
-    "cardEntries": 4075,
-    "uniqueAnswers": 3786,
-    "forbiddenAnswers": 347,
+    "cardEntries": 3753,
+    "uniqueAnswers": 3516,
+    "forbiddenAnswers": 346,
     "photos": 38,
     "levels": 36
   },
@@ -227,38 +227,38 @@
     },
     {
       "id": "church",
-      "name": "Burlington & neighbors",
-      "cards": 252,
-      "forbidden": 41
+      "name": "Church Street & Burlington",
+      "cards": 148,
+      "forbidden": 36
     },
     {
       "id": "eat",
       "name": "Vermont food & drink",
-      "cards": 176,
+      "cards": 96,
       "forbidden": 3
     },
     {
       "id": "vermont",
       "name": "Vermont favorites",
-      "cards": 186,
+      "cards": 113,
       "forbidden": 20
     },
     {
       "id": "lake",
-      "name": "Lake, trail & campfire",
-      "cards": 111,
+      "name": "Lake life",
+      "cards": 51,
       "forbidden": 8
     },
     {
       "id": "act",
       "name": "Act like a local",
-      "cards": 99,
+      "cards": 96,
       "forbidden": 0
     },
     {
       "id": "seasons",
       "name": "A year in Vermont",
-      "cards": 136,
+      "cards": 134,
       "forbidden": 9
     },
     {

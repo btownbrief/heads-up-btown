@@ -1,5 +1,5 @@
 {
- "_note": "Cards pulled from data/decks.json on 2026-09-06 after the Astra review: their hint rests on an inference, an outside page, or a scraped restaurants.json row nobody has walked past. Not loaded by the game. To restore one: confirm the fact, move the object back into the same deck in data/decks.json, run node scripts/validate-decks.mjs.",
+ "_note": "Cards pulled from data/decks.json on 2026-09-06 after the editorial review: their hint rests on an inference, an outside page, or a scraped restaurants.json row nobody has walked past. Not loaded by the game. To restore one: confirm the fact, move the object back into the same deck in data/decks.json, run node scripts/validate-decks.mjs.",
  "decks": [
   {
    "id": "church",

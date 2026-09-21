@@ -22,7 +22,7 @@ The interface uses system typography, restrained colors, clear primary/secondary
 
 ## The game
 
-- 44 curated decks: 36 general and 8 larger local collections. 4,075 card entries, **3,786 distinct answers** after cross-deck canonicalization. 38 credited local photo cards and 347 distinct answers with hand-authored forbidden clues. Counts are measured, not estimated.
+- 44 curated decks: 36 general and 8 larger local collections. 3,519 card entries, **3,516 distinct answers** after cross-deck canonicalization. 38 credited local photo cards and 346 distinct answers with hand-authored forbidden clues. Counts are measured, not estimated.
 - Quick play, individual sessions, two teams, and a cooperative target. 2–16 named players for sessions; quick play needs a guesser and friends who give clues. Teams alternate and receive equal turns with uneven rosters. Rounds last 30, 60, 90, or 120 seconds; 1–5 laps. Optional final 30-second lap for competition.
 - Classic, One Clue Each, Forbidden Words, Act it out, One word only, Character voices, Hum along, and Party shuffle. Act/Hum decks keep their rule in Classic. Forbidden and Hum explicitly filter for eligible content. Party shuffle changes rules between turns.
 - Each group name gets device-local answer history across decks and sessions. Common aliases normalize to the same answer. Shown cards, including unanswered last cards, are remembered immediately. **Exhaustion ends the round**; users must deliberately begin a new card cycle. No hidden automatic recycle.
@@ -37,7 +37,7 @@ The interface uses system typography, restrained colors, clear primary/secondary
 
 ## A broader shelf
 
-General-interest decks lead the library. Around the house, Things you wear, School days, Road trip, Free time, and Faces & feelings add 540 familiar prompts. Ten previously small general decks each gain 40 cards. The former local shelf becomes eight collections, with generic college and pet content moved into general decks. Text collections contain 99–252 cards; the credited photo deck retains all 38 images. All 36 general decks contain at least 60 cards.
+General-interest decks lead the library. Around the house, Things you wear, School days, Road trip, Free time, and Faces & feelings add 540 familiar prompts. Ten previously small general decks each gain 40 cards. The former local shelf becomes eight collections, with generic college and pet content moved into general decks. The September 20 content pass removes quarantined and unsuitable prompts and deduplicates answers across collections. Local text collections contain 41–162 cards; the credited photo deck retains all 38 images. Every published deck has at least 20 cards.
 
 Saved selections and challenge deck references follow merged IDs. Current rounds retain their queue and clock. Renamed answers and variants such as “A dog”/“Dog” keep a shared history key; upgrading never clears group history or challenge progress.
 
@@ -54,15 +54,16 @@ Tap Pass / Correct; arrow left / right; Space or Escape pauses; Space resumes. N
 - `dist/js/engine.js`: pure rules, scoring, queue selection, aliases, schedules, parser, tilt math.
 - `dist/js/main.js`: accessible DOM views, session orchestration, lifecycle, custom editing, room view, browser capabilities.
 - `dist/js/storage.js`: `hub-party-v1` device-local state, separate from the old Heads Up game's keys.
-- `dist/js/decks.js` and `extra-decks.js`: original editorial snapshots, with provenance per card.
+- `dist/js/decks.js`: published catalog, with provenance per card and build-time editorial filtering.
+- `dist/js/extra-decks.js`: expansion input; publication is controlled by the build policy.
 - `dist/js/general-decks.js`: six new everyday collections, 400 additions to smaller general decks, and authored forbidden clues.
 - `dist/js/catalog.js`: editorial wording changes and collection merges. Stable answer keys and the storage migration preserve seen-card history, saved sessions, and earned progress.
-- `scripts/build-decks.mjs`: intentional content rebuild from the named Btown repos plus authored general material. **Do not run it unless refreshing content**; it requires those source checkouts.
+- `scripts/build-decks.mjs`: intentional content rebuild from the named Btown repos plus authored general material. **Do not run it unless refreshing content**; it requires those source checkouts. It applies quarantine, checked-place filtering, theme limits, and cross-deck deduplication from `data/decks.json` before writing the final catalog. It reads prepared photos without modifying assets.
 - `scripts/prepare-assets.py`: one-time asset import, photo attribution, font download. Requires the named source photo repo.
 - `scripts/prepare-offline.mjs`: regenerate the offline asset manifest if files are added or removed.
 - `docs/content-inventory.json`, `docs/design-decisions.md`, `docs/verification.md`: editorial counts, feedback decisions, and validation evidence.
 
-Source repo files were read and copied; the existing games and newsletter repos were not modified. Source hints with changing hours, prices, and schedules were deliberately not copied into the player flow. Photo originals are unmodified and all licenses are linked in `dist/credits.html`.
+Source repo files were read and copied; the existing games and newsletter repos were not modified. Source hints with changing hours, prices, and schedules are not displayed in the player flow. Corrected factual hints are retained as publication metadata for review. Photo originals are unmodified and all licenses are linked in `dist/credits.html`.
 
 ## Deliberately excluded from this edition
 
