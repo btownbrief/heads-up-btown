@@ -1140,17 +1140,24 @@ async function contentCacheName(reg) {
       });
     } catch {}
   const keys = await caches.keys();
-  return keys
-    .filter((k) => k.startsWith(CACHE_PREFIX))
-    .sort()
-    .pop();
+  for (const name of keys.filter((k) => k.startsWith(CACHE_PREFIX)).reverse()) {
+    const cache = await caches.open(name);
+    if (await cache.match(new URL("./shell-ready", location.href))) return name;
+  }
+  return null;
 }
-// The saved marker records which file list was saved, so a new build reports
-// itself as unsaved instead of claiming stale files are ready.
-async function offlineDigest() {
-  const text = await fetch("./offline-files.json").then((r) => r.text());
+// The generated digest covers file bytes, not just their names.
+async function offlineManifest() {
+  const response = await fetch("./offline-files.json");
+  if (!response.ok || response.redirected) throw new Error("Offline manifest unavailable");
+  const manifest = await response.json();
+  if (!/^[a-f0-9]{64}$/.test(manifest.digest) || !Array.isArray(manifest.files) || !manifest.hashes)
+    throw new Error("Invalid offline manifest");
+  return manifest;
+}
+async function responseDigest(response) {
   const bytes = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)),
+    await crypto.subtle.digest("SHA-256", await response.clone().arrayBuffer()),
   );
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -1180,18 +1187,20 @@ async function saveOffline() {
     const reg = await navigator.serviceWorker.register("./sw.js");
     watchForUpdate(reg);
     await navigator.serviceWorker.ready;
-    const digest = await offlineDigest();
+    const { digest, files: list, hashes } = await offlineManifest();
     const name = await contentCacheName(reg);
     if (!name) throw new Error("No content cache is available yet.");
-    const list = await fetch("./offline-files.json").then((r) => r.json());
+    if (name !== CACHE_PREFIX + digest) throw new Error("Offline build changed; reload and try again.");
     const cache = await caches.open(name);
     await cache.delete(readyMarker());
     const settled = await Promise.allSettled(
       list.map(async (file) => {
         const url = new URL(file, location.href);
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: "reload" });
         if (!response.ok || response.redirected)
           throw new Error("Could not save " + file);
+        if (await responseDigest(response) !== hashes[file])
+          throw new Error("Content changed while saving " + file);
         await cache.put(url, response);
       }),
     );
@@ -1200,6 +1209,8 @@ async function saveOffline() {
     for (const file of list)
       if (!(await cache.match(new URL(file, location.href))))
         throw new Error("Missing after save: " + file);
+    if (await contentCacheName(reg) !== name)
+      throw new Error("Offline build changed while saving; try again.");
     await cache.put(readyMarker(), new Response(digest));
     offlineStatus = "ready";
     const el = document.querySelector("#offline-message");
@@ -1229,7 +1240,7 @@ async function offlineInit() {
       ? await (await caches.open(name)).match(readyMarker())
       : null;
     offlineStatus =
-      marker && (await marker.text()) === (await offlineDigest())
+      marker && (await marker.text()) === (await offlineManifest()).digest
         ? "ready"
         : "available";
   } catch {

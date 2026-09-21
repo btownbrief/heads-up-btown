@@ -65,10 +65,29 @@ export function migrateCatalogState(state) {
   state.catalogVersion = 2;
   return state;
 }
+const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+function repairGroups(groups) {
+  if (!isRecord(groups)) return {};
+  return Object.fromEntries(Object.entries(groups).map(([key, value]) => {
+    const group = isRecord(value) ? value : {};
+    const seen = isRecord(group.seen) ? group.seen : {};
+    return [key, {
+      ...group,
+      name: typeof group.name === "string" && group.name.trim() ? group.name : key,
+      // Retain every remembered answer even when its metadata needs repair.
+      seen: Object.fromEntries(Object.entries(seen).map(([answer, record]) => [answer, {
+        ...(isRecord(record) ? record : {}),
+        at: Number.isFinite(record?.at) && record.at >= 0 ? record.at : 0,
+        verdict: ["shown", "got", "pass", "challenge", "unanswered"].includes(record?.verdict)
+          ? record.verdict : "shown",
+      }])),
+    }];
+  }));
+}
 export function loadState() {
   try {
     const x = JSON.parse(localStorage.getItem(KEY));
-    if (!x || typeof x !== "object") return structuredClone(defaults);
+    if (!isRecord(x)) return structuredClone(defaults);
     return migrateCatalogState({
       ...structuredClone(defaults),
       ...x,
@@ -77,7 +96,7 @@ export function loadState() {
       setup: { ...structuredClone(defaults.setup), ...x.setup },
       custom: Array.isArray(x.custom) ? x.custom : [],
       history: Array.isArray(x.history) ? x.history : [],
-      groups: x.groups && typeof x.groups === "object" ? x.groups : {},
+      groups: repairGroups(x.groups),
       group:
         typeof x.group === "string" && x.group.trim()
           ? x.group

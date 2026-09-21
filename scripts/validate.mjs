@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { buildOfflineManifest } from "./prepare-offline.mjs";
 import { decks } from "../dist/js/decks.js";
 import { cardKey } from "../dist/js/engine.js";
 const ids = new Set(),
@@ -33,7 +34,10 @@ for (const d of decks) {
     }
   }
 }
-const files = JSON.parse(fs.readFileSync("dist/offline-files.json", "utf8"));
+const manifest = JSON.parse(fs.readFileSync("dist/offline-files.json", "utf8"));
+const { files } = manifest;
+assert(Array.isArray(files), "Offline manifest needs a file list");
+assert.equal(new Set(files).size, files.length, "Duplicate offline asset");
 for (const f of files)
   assert(fs.existsSync("dist/" + f.slice(2)), "Missing offline asset " + f);
 const walk = (dir) =>
@@ -49,6 +53,13 @@ for (const p of walk("dist"))
     skip.has(p) || listed.has("./" + p.slice(5)),
     "Shipped file missing from offline-files.json: " + p,
   );
+assert.deepEqual(manifest, buildOfflineManifest(),
+  "Offline content digest is stale; run node scripts/prepare-offline.mjs");
+assert.equal(
+  fs.readFileSync("dist/sw.js", "utf8").match(/const STAMP = "([^"]+)";/)?.[1],
+  manifest.digest,
+  "Service worker build stamp does not match the offline content digest",
+);
 const core = [
   ...fs
     .readFileSync("dist/sw.js", "utf8")

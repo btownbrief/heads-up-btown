@@ -1,8 +1,6 @@
-// The build stamp is the single owner of the content cache name. Bump it in this
-// file whenever dist/ changes; the page discovers the live name instead of
-// hardcoding it.
+// Generated from shipped bytes by scripts/prepare-offline.mjs.
 const PREFIX = "hub-party-content-";
-const STAMP = "2026-09-13";
+const STAMP = "a46ce600cb605146628460321f0e9811c0939ad5e5cc08d4627415191bd065d3";
 const CACHE = PREFIX + STAMP;
 const CORE = [
   "./",
@@ -35,20 +33,41 @@ const scopePath = () => new URL(self.registration.scope).pathname;
 const coreSet = () =>
   new Set(CORE.map((u) => new URL(u, self.registration.scope).pathname));
 const isAsset = (url) => url.pathname.startsWith(scopePath() + "assets/");
-const mayStore = (url) => coreSet().has(url.pathname) || isAsset(url);
+const shellMarker = () => new URL("./shell-ready", self.registration.scope);
+async function responseHash(response) {
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", await response.clone().arrayBuffer()));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 // A fresh cache is filled completely before it replaces the live one, so a
 // half-downloaded build can never serve a broken mix of old and new files.
 self.addEventListener("install", (event) =>
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE);
-      for (const url of CORE) {
-        const r = await fetch(new URL(url, self.registration.scope), {
-          cache: "reload",
-        });
-        if (!r.ok || r.redirected)
-          throw new Error("Offline cache needs a direct successful response");
-        await cache.put(new URL(url, self.registration.scope), r);
+      const existing = await caches.open(CACHE);
+      if (!(await existing.match(shellMarker()))) {
+        try {
+          const manifestResponse = await fetch(new URL("./offline-files.json", self.registration.scope), { cache: "reload" });
+          if (!manifestResponse.ok || manifestResponse.redirected)
+            throw new Error("Offline manifest needs a direct successful response");
+          const manifest = await manifestResponse.clone().json();
+          if (manifest.digest !== STAMP) throw new Error("Offline build changed during install");
+          // Stage and verify every shell response before writing the new cache.
+          const responses = await Promise.all(CORE.map(async (file) => {
+            if (file === "./offline-files.json") return manifestResponse;
+            const response = await fetch(new URL(file, self.registration.scope), { cache: "reload" });
+            if (!response.ok || response.redirected)
+              throw new Error("Offline cache needs a direct successful response");
+            if (await responseHash(response) !== manifest.hashes[file === "./" ? "./index.html" : file])
+              throw new Error("Offline shell content changed during install");
+            return response;
+          }));
+          for (let i = 0; i < CORE.length; i++)
+            await existing.put(new URL(CORE[i], self.registration.scope), responses[i]);
+          await existing.put(shellMarker(), new Response(STAMP));
+        } catch (error) {
+          await caches.delete(CACHE);
+          throw error;
+        }
       }
       await self.skipWaiting();
     })(),
@@ -75,31 +94,33 @@ self.addEventListener("fetch", (event) => {
     !url.pathname.startsWith(scopePath())
   )
     return;
+  if (isAsset(url)) {
+    const cache = caches.open(CACHE);
+    const network = fetch(event.request).then(async (response) => {
+      if (response.ok && !response.redirected)
+        await (await cache).put(event.request, response.clone());
+      return response;
+    });
+    // Register the lifetime extension while the fetch event is dispatching.
+    event.waitUntil(network.catch(() => {}));
+    event.respondWith((async () => {
+      const cached = event.request.cache === "reload" ? null
+        : await (await cache).match(event.request, { ignoreSearch: true });
+      if (cached) return cached;
+      return network.catch(() => new Response("This asset is not saved offline.", { status: 503 }));
+    })());
+    return;
+  }
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
-      // Card images and fonts answer from the cache straight away, then refresh
-      // in the background so a replaced file reaches the next visit.
-      if (isAsset(url)) {
+      // Keep a complete shell pinned to its build until the next worker activates.
+      if (coreSet().has(url.pathname) && event.request.cache !== "reload") {
         const cached = await cache.match(event.request, { ignoreSearch: true });
-        const network = fetch(event.request)
-          .then(async (response) => {
-            if (response.ok && !response.redirected)
-              await cache.put(event.request, response.clone());
-            return response;
-          })
-          .catch(() => null);
-        if (cached) {
-          event.waitUntil(network);
-          return cached;
-        }
-        const fresh = await network;
-        if (fresh) return fresh;
+        if (cached) return cached;
       }
       try {
         const response = await fetch(event.request);
-        if (response.ok && !response.redirected && mayStore(url))
-          await cache.put(event.request, response.clone());
         return response;
       } catch {
         const cached = await cache.match(event.request, { ignoreSearch: true });
