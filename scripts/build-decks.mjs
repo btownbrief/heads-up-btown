@@ -1,10 +1,19 @@
-// Rebuild only when intentionally refreshing editorial content from the named local repos.
+// Rebuild the published catalog from source snapshots and the editorial publication policy.
 import fs from "node:fs";
 import path from "node:path";
-import { uniqueCards } from "../dist/js/engine.js";
-const base = "/Users/stephendavis/btownbrief";
+import { uniqueCards, cardKey, normalize } from "../dist/js/engine.js";
+import { extraDecks } from "../dist/js/extra-decks.js";
+import { organizeDecks } from "../dist/js/catalog.js";
+import { fileURLToPath } from "node:url";
+const root = fileURLToPath(new URL("../", import.meta.url));
+
+export function buildDecks({ output = path.join(root, "dist/js/decks.js") } = {}) {
+const base = path.dirname(root.replace(/\/$/, ""));
 const read = (p) => JSON.parse(fs.readFileSync(path.join(base, p), "utf8"));
-const old = read("heads-up-btown/data/decks.json").decks;
+const input = JSON.parse(fs.readFileSync(path.join(root, "data/decks.json"), "utf8"));
+const old = input.decks;
+const policy = input.publication;
+const quarantine = JSON.parse(fs.readFileSync(path.join(root, "data/decks-unconfirmed.json"), "utf8"));
 const things = read("btown-brief/data/things.json");
 const places = read("dibs/data/landmarks.json").landmarks;
 const photos = read("where-in-btown-levels/data/spots.json");
@@ -50,7 +59,7 @@ function add(
   };
   deck.cards = uniqueCards(deck.cards).map((c, i) => ({
     ...c,
-    id: `${id}-${i + 1}`,
+    id: c.id || `${id}-${i + 1}`,
   }));
   decks.push(deck);
   return deck;
@@ -97,6 +106,9 @@ for (const d of old) {
     .filter((c) => !omit.has(c.t))
     .map((c) => ({
       t: c.t,
+      id: policy.sourceRuntimeIds[c.id] || c.id,
+      ...(c.answerKey ? { answerKey: c.answerKey } : {}),
+      ...(c.publishHint ? { h: c.h } : {}),
       d: d.id === "newcomer" ? 1 : d.id === "act" ? 2 : 2,
       source: `heads-up-btown/data/decks.json#${c.id}`,
       originalSource: c.s,
@@ -293,15 +305,13 @@ const photoNames = new Set([
   "Porter Screen Mill",
   "Winooski Falls Way",
 ]);
-fs.mkdirSync("dist/assets/photos", { recursive: true });
+// Photo assets are prepared separately; a content rebuild never copies or changes them.
 const photoCards = photos
   .filter((p) => photoNames.has(p.name))
   .map((p, i) => {
     const dest = "assets/photos/" + path.basename(p.file);
-    fs.copyFileSync(
-      path.join(base, "where-in-btown-levels", p.file),
-      path.join("dist", dest),
-    );
+    if (!fs.existsSync(path.join(root, "dist", dest)))
+      throw new Error(`Missing prepared photo: ${dest}`);
     return {
       t: p.name,
       d: i < 15 ? 2 : 3,
@@ -829,7 +839,7 @@ const localBands = {
     "Flora & Fauna|Deli 126|Little Italy|Wilder Wines|Required Viewing|The Grey Jay|Vermont Stage|Queen City Ghostwalk|Mad River Distillers|JP's Pub|Revolution Kitchen|Onyx Tonics",
   ],
   eat: [
-    "Creemee|Maple creemee|Al's French Fries|Gravy fries|Heady Topper|Cider donut|Ben & Jerry's|Free Cone Day|Sugar on snow|Burlington Farmers Market|Montreal-style bagel|Speeder & Earl's",
+    "Creemee|Maple creemee|Al's French Frys|Gravy fries|Heady Topper|Cider donut|Ben & Jerry's|Free Cone Day|Sugar on snow|Burlington Farmers Market|Montreal-style bagel|Speeder & Earl's",
     "Rauchbier|Wit's Up|Magic bacon|Duff Hour|Mock eel|The lamb sandwich|Sourdough donut|Mirabelles pastry|Sam Mazza's raspberry cookies|Affogato at Scout|Shacksbury",
   ],
   vermont: [
@@ -926,14 +936,101 @@ const order = [
   "kids",
 ];
 decks.sort((a, b) => {
-  const ai = order.indexOf(a.id),
-    bi = order.indexOf(b.id);
-  return (ai < 0 ? 100 : ai) - (bi < 0 ? 100 : bi);
+  const leftIndex = order.indexOf(a.id),
+    rightIndex = order.indexOf(b.id);
+  return (leftIndex < 0 ? 100 : leftIndex) - (rightIndex < 0 ? 100 : rightIndex);
 });
-fs.writeFileSync(
-  "dist/js/decks.js",
-  "// Editorial snapshot: 2026-09-12. Source provenance retained per card.\nconst originalDecks=" +
-    JSON.stringify(decks, null, 1) +
-    ";\nimport { extraDecks } from \"./extra-decks.js\";\nimport { organizeDecks } from \"./catalog.js\";\nexport const decks = organizeDecks([...originalDecks, ...extraDecks]);\n",
-);
-await import("./inventory.mjs");
+// Quarantine applies to every source, including aliases and later expansions.
+const blocked = new Set(quarantine.decks.flatMap(deck => deck.cards.flatMap(card =>
+  [card.t, ...(policy.quarantineAliases[card.t] || [])].map(t => cardKey({ t })),
+)));
+const excluded = policy.excludedTitlePatterns.map(pattern => new RegExp(pattern, "i"));
+const preserved = new Set(policy.preserveCardIds);
+const checked = new Set(old.flatMap(deck => deck.cards.map(cardKey)));
+const approved = card => !blocked.has(cardKey(card)) &&
+  !blocked.has(cardKey({ t: card.t })) &&
+  !excluded.some(pattern => pattern.test(`${card.t} ${card.answerKey || ""}`));
+const raw = [...decks, ...structuredClone(extraDecks)].map(deck => ({
+  ...deck,
+  cards: deck.cards.filter(card => {
+    if (!approved(card)) return false;
+    if (preserved.has(card.id)) return true;
+    if (policy.omitRawDecks.includes(deck.id)) return false;
+    const keep = policy.keepRawTitles[deck.id];
+    if (keep && !keep.includes(card.t)) return false;
+    // A bulk import is not evidence of an editorial review.
+    if (policy.reviewedImportsOnly && /^(btown-brief|dibs)\//.test(card.source || ""))
+      return checked.has(cardKey(card));
+    return true;
+  }),
+}));
+const published = organizeDecks(raw);
+const churchExcluded = new Set(policy.churchExcludedIds);
+const thingById = new Map(things.map(thing => [thing.id, thing]));
+const burlington = new Set(["Downtown", "South End", "Old North End", "New North End", "Waterfront", "University / Hill Section"]);
+for (const deck of published) {
+  deck.cards = deck.cards.filter(card => {
+    if (!approved(card)) return false;
+    if (preserved.has(card.id)) return true;
+    if (deck.id !== "church") return true;
+    if (churchExcluded.has(card.id)) return false;
+    const thing = thingById.get(card.source?.split("things.json#")[1]);
+    return !thing || burlington.has(thing.neighborhood);
+  });
+}
+// Cross-deck duplicates are already collapsed at play time: eligibleCards() runs
+// uniqueCards() over the selected decks, so a repeated answer never reaches a player.
+// Stripping the duplicate from the broader deck only shrinks that deck when it is picked
+// on its own, so this pass is off by default. Set publication.crossDeckDedupe to re-enable.
+if (policy.crossDeckDedupe) {
+// Prefer the most specific collection; photo prompts keep their attribution.
+const ordered = [...published].sort((a, b) =>
+  policy.duplicateDeckPriority.indexOf(a.id) - policy.duplicateDeckPriority.indexOf(b.id));
+const preferred = new Map(Object.entries(policy.preferredDeckByAnswer)
+  .map(([answer, deckId]) => [cardKey({ t: answer }), deckId]));
+const preferredOwners = new Map();
+for (const deck of published) for (const card of deck.cards)
+  if (preferred.get(cardKey(card)) === deck.id) preferredOwners.set(cardKey(card), card);
+const owners = new Map();
+const tokens = card => [cardKey(card), normalize(card.t)];
+// Explicitly excluded review cards retain their current content and collection.
+for (const deck of published) for (const card of deck.cards)
+  if (preserved.has(card.id)) for (const token of tokens(card)) owners.set(token, card);
+for (const deck of ordered) {
+  deck.cards = deck.cards.filter(card => {
+    if (preserved.has(card.id)) return true;
+    const preferredOwner = preferredOwners.get(cardKey(card));
+    const previous = preferredOwner && preferredOwner !== card ? preferredOwner :
+      tokens(card).map(token => owners.get(token)).find(Boolean);
+    if (previous) {
+      if (!preserved.has(previous.id)) {
+        if (!previous.ban && card.ban) previous.ban = card.ban;
+        if (!previous.h && card.h) previous.h = card.h;
+      }
+      return false;
+    }
+    for (const token of tokens(card)) owners.set(token, card);
+    return true;
+  });
+}
+}
+const descriptions = {
+  church: ["Church Street & Burlington", "Downtown favorites and familiar Burlington places."],
+  eat: ["Vermont food & drink", "Local places, favorite dishes, and familiar drinks."],
+  lake: ["Lake life", "Lake Champlain, beaches, boats, and waterfront landmarks."],
+};
+for (const deck of published) {
+  if (descriptions[deck.id]) [deck.name, deck.blurb] = descriptions[deck.id];
+  deck.level = deck.cards.every(card => card.d === 1) ? "Easy" :
+    deck.cards.every(card => card.d === 3) ? "Hard" : "Mixed";
+}
+fs.writeFileSync(output,
+  "// Editorial snapshot: 2026-09-20. Source provenance retained per card.\nexport const decks = " +
+  JSON.stringify(published, null, 2) + ";\n");
+return published;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  buildDecks();
+  await import("./inventory.mjs");
+}

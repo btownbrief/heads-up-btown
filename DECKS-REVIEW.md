@@ -1,12 +1,11 @@
 # Heads Up, Burlington — deck review
 
 Six decks, 373 cards, drafted 2026-09-06 from btown-brief data and the newsletter
-archive. Every hint carries a source in `data/decks.json` (`s`). Nothing below is
-invented, but a handful lean on an outside URL or an inference, and those are the
-ones to eyeball first. Strike anything that doesn't land and it gets cut from the
+archive. Every hint carries a source in `data/decks.json` (`s`). This is the original review checklist; some entries were later quarantined or cut.
+The dated content pass below records the current publication counts. Strike anything that doesn't land and it gets cut from the
 JSON (`node scripts/validate-decks.mjs` after).
 
-## Quarantined 2026-09-06 (Astra review)
+## Quarantined 2026-09-06 (editorial review)
 
 Nineteen cards whose hint rested on an inference, an outside page, or a scraped
 restaurants.json row were moved out of `data/decks.json` into
@@ -74,7 +73,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **City Hall Park** — The lawn set aside by Burlington's proprietors in 1798, once Court House Square. *(walking-tour.json)*
 - [ ] **Burlington City Hall** — The 1928 building by McKim, Mead and White, the firm behind the old Penn Station. *(history-facts.json)*
 - [ ] **Fletcher Free Library** — Burlington's Carnegie library on College Street, built over a filled-in ravine. *(history-facts.json)*
-- [ ] **The Flynn** — A 1,400-seat Art Deco theater from 1930 on Main Street that never went dark. *(things.json)*
+- [ ] **The Flynn** — A 1,400-seat Art Deco theater from 1930 on Main Street. *(things.json)*
 - [ ] **Vermont Comedy Club** — Vermont's only dedicated comedy club, with a free open mic on Wednesdays. *(things.json)*
 - [ ] **BCA Center** — Burlington City Arts' free gallery on Church Street. *(things.json)*
 - [ ] **Frog Hollow** — Juried Vermont craft, ceramics to glass, in a Church Street gallery. *(things.json)*
@@ -103,7 +102,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Lincoln's** — The cash-only basement speakeasy where every drink is five dollars. *(things.json)*
 - [ ] **Red Square** — Live music nearly every night on Church Street, with a side patio. *(things.json)*
 - [ ] **The OP** — The Other Place, a classic Burlington dive with cheap pitchers and pool. *(things.json)*
-- [ ] **Three Needs** — The downtown brewpub-dive famous for Duff Hour, the cheap early pint window. *(things.json)*
+- [ ] **Three Needs** — The Pearl Street dive famous for Duff Hour, the cheap early pint window. *(things.json)*
 - [ ] **Rí Rá** — The Irish pub at 123 Church Street. *(restaurants.json)*
 - [ ] **JP's Pub** — The Main Street dive with a karaoke stage four nights a week. *(hobbies.json)*
 - [ ] **Nectar's** — The Main Street club that launched Phish; closed for good in 2025 after fifty years. *(walking-tour.json)*
@@ -149,7 +148,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Fried halloumi** — Honey Road's dish with a citywide reputation. *(things.json)*
 - [ ] **Lobster roll at Shanty** — The standard order at Shanty on the Shore, the waterfront seafood institution. *(things.json)*
 - [ ] **Maple-apple crepe** — The fall order at The Skinny Pancake on the waterfront. *(things.json)*
-- [ ] **Al's French Fries** — Fresh-cut fries from a South Burlington spot running since 1948. *(things.json)*
+- [ ] **Al's French Frys** — Fresh-cut fries from a South Burlington spot running since 1948. *(things.json)*
 - [ ] **Montreal-style bagel** — Myer's boils them in honey water and bakes them in a wood-fired oven. *(things.json)*
 - [ ] **Sourdough donut** — Ms. Weinerz's cult donuts that empty the racks by mid-morning. *(things.json)*
 - [ ] **Magic bacon** — Sneakers Bistro's maple bacon with a following of its own. *(things.json)*
@@ -172,14 +171,14 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Village Scoop** — Colchester's after-beach, after-game creemee window. *(things.json)*
 - [ ] **Wit's Up** — Citizen Cider's right first pour for anyone who doesn't usually drink cider. *(things.json)*
 - [ ] **Fiddlehead IPA** — Shelburne's open secret; Thursday can releases sell out. *(things.json)*
-- [ ] **Switchback Ale** — Vermont's most widely distributed beer, unfiltered and hazy since 1996. *(things.json)*
+- [ ] **Switchback Ale** — Switchback Brewing was founded in 2002; its signature ale is unfiltered. *(things.json)*
 - [ ] **Rauchbier** — Queen City Brewery's smoked-malt lager, the one to be brave about. *(things.json)*
 - [ ] **Vacation IPA** — Foam Brewers' reliable starting point, on the waterfront. *(things.json)*
 - [ ] **Deep City** — Order food here, drink Foam's beer next door, watch the lake. *(things.json)*
 - [ ] **Farmhouse burger** — The Farmhouse Tap & Grill beef burger every Burlington burger gets measured against. *(things.json)*
 - [ ] **Neapolitan pizza at Verità** — Blistered wood-oven pies on St. Paul Street, downtown's default best pizza. *(things.json)*
 - [ ] **Wood-fired flatbread** — American Flatbread's hearth on St. Paul Street, watched from your table. *(things.json)*
-- [ ] **Pizza 44** — Deep-dish attached to Queen City Brewery on Pine Street. *(things.json)*
+- [ ] **Pizza 44** — Pizza on Park Street in Burlington. *(things.json)*
 - [ ] **Folino's** — Wood-fired pies next to Fiddlehead in Shelburne; the original is BYOB. *(things.json)*
 - [ ] **Red Hen bread** — The Middlesex bakery whose bread stocks half the good restaurants in the state. *(things.json)*
 - [ ] **Mirabelles pastry** — The pastry case Burlington bakers get judged against, now on Williston Road. *(things.json)*
@@ -241,7 +240,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Vermont Teddy Bear** — The Shelburne factory with a Bear Hospital and a lifetime guarantee. *(things.json)*
 - [ ] **The von Trapps** — Yes, the Sound of Music family. They settled in Stowe and their lodge brews lagers. *(things.json)*
 - [ ] **Covered bridges** — Vermont has 100 historic ones; a man from Manchester, England filmed every one. *(archive:2026-06-29)*
-- [ ] **A moose downtown** — They wander Burlington city streets often enough to make the national travel press. *(archive:2026-07-03)*
+- [ ] **A moose downtown** — Moose wander onto Burlington city streets now and then. *(archive:2026-07-03)*
 - [ ] **The river of crows** — Winter evenings downtown, thousands of crows streaming to roost. *(archive:2026-07-03)*
 - [ ] **Mount Mansfield** — Vermont's highest summit at 4,393 feet; alpine tundra on top since the last ice age. *(things.json)*
 - [ ] **Camel's Hump** — 4,083 feet, Vermont's most iconic summit that isn't Mansfield. *(things.json)*
@@ -253,7 +252,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Penguin Plunge** — Jumping into Lake Champlain in March for Special Olympics Vermont; $585,000 raised in 2026. *(archive:2026-03-23)*
 - [ ] **Vermont City Marathon** — Memorial Day weekend, neighborhoods turn out with hoses and cowbells. *(things.json)*
 - [ ] **Vermont Green FC** — Summer soccer at Virtue Field; national champions in 2025 and 2026. *(archive:2026-08-03)*
-- [ ] **The Lake Monsters** — Minor league baseball at Centennial Field, open since 1906. Champ is the mascot. *(things.json)*
+- [ ] **The Lake Monsters** — Burlington's summer collegiate baseball team, playing at Centennial Field. *(things.json)*
 - [ ] **The Gut** — Gutterson Fieldhouse, where UVM hockey is loud and old-school. *(things.json)*
 - [ ] **Catamounts** — UVM's teams. The university dates to 1791, the year Vermont became a state. *(history-facts.json)*
 - [ ] **Champlain Valley Fair** — Vermont's largest agricultural fair, nine days in Essex Junction each late August. *(things.json)*
@@ -262,7 +261,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Shelburne Farms** — A 1,400-acre working farm and National Historic Landmark. *(things.json)*
 - [ ] **Hill Farmstead** — The Greensboro brewery regularly rated the best on the planet. *(things.json)*
 - [ ] **Fiddlehead** — The Shelburne brewery whose Thursday can releases sell out. *(things.json)*
-- [ ] **Switchback** — Unfiltered and hazy since 1996, Vermont's most widely distributed beer. *(things.json)*
+- [ ] **Switchback** — Switchback Brewing was founded in 2002; its signature ale is unfiltered. *(things.json)*
 - [ ] **The Alchemist** — The Stowe brewery behind Heady Topper. *(things.json)*
 - [ ] **Sap buckets** — Hung on maples in late winter; sugaring runs late February to early April. *(hobbies.json)*
 - [ ] **Foraging ramps** — May in the Vermont woods; chanterelles come in July. *(hobbies.json)*
@@ -281,8 +280,8 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Shoveling out your car after a nor'easter** — Snow Day Edition, January 2026: 2 to 4 more inches overnight. *(archive:2026-01-26)*
 - [ ] **Waiting for a Green Mountain Transit bus in February** — GMT runs the county's buses; the #4 to Essex Center was cut in 2026. *(archive:2026-06-15)*
 - [ ] **Night skiing at Bolton under the lights** — The locals' hill, 35 minutes out, with a backcountry program that outclasses its size. *(things.json)*
-- [ ] **Riding a bike into the wind on the causeway** — The rail causeway runs 3.5 miles into the lake; the wind at the midpoint is real. *(things.json)*
-- [ ] **Catching the bike ferry across the causeway gap** — The $4 seasonal ferry bridges the gap to South Hero. *(things.json)*
+- [ ] **Riding a bike into the wind on the causeway** — The rail causeway runs three miles into the lake; the wind at the midpoint is real. *(things.json)*
+- [ ] **Catching the bike ferry across the causeway gap** — The seasonal ferry bridges the gap to South Hero. *(things.json)*
 - [ ] **Tapping a maple tree in your backyard** — Backyard sugaring, late February to early April. *(hobbies.json)*
 - [ ] **Boiling sap in the driveway** — By Town Meeting Day you're boiling like a real Vermonter. *(hobbies.json)*
 - [ ] **Ice fishing in a shanty on Malletts Bay** — A small village of shanties appears when the bay freezes. *(hobbies.json)*
@@ -292,8 +291,6 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Dodging a juggler at Festival of Fools** — Street performers take over Church Street in early August. *(things.json)*
 - [ ] **Swinging on the yellow porch swings at Waterfront Park** — The swings facing the Adirondacks, in every summer photo. *(things.json)*
 - [ ] **Leaning on a cannon at Battery Park for sunset** — The cannons make a good leaning post over the full Adirondack ridgeline. *(sunset-spots.json)*
-- [ ] **Swimming behind the waterfall at Bristol Falls** — On a good-flow day you can swim behind the curtain. *(things.json)*
-- [ ] **Jumping into the Bolton Potholes** — The staircase of stone bowls on Joiner Brook; check depth first. *(things.json)*
 - [ ] **Standing in line for Free Cone Day** — Ben & Jerry's on Church Street, every spring since 1979. *(history-facts.json)*
 - [ ] **Contra dancing at Queen City Contras** — Every dance is taught, no partner needed, live bands and callers. *(clubs.json)*
 - [ ] **Singing karaoke at JP's Pub** — Four nights a week; the room claps for people who are objectively not good. *(hobbies.json)*
@@ -324,17 +321,16 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Hiking Camel's Hump at dawn** — Plan 5 to 6 hours and an early start on summer weekends. *(things.json)*
 - [ ] **Driving the hairpins through Smugglers' Notch** — So tight that trucks are banned. *(things.json)*
 - [ ] **Cheering at the Gut for UVM hockey** — Gutterson Fieldhouse, the best cheap winter night out. *(things.json)*
-- [ ] **Eating a hot dog at a Lake Monsters game** — Centennial Field, open since 1906. The hot dogs are exactly right. *(things.json)*
+- [ ] **Eating a hot dog at a Lake Monsters game** — Burlington's summer collegiate baseball team, playing at Centennial Field. *(things.json)*
 - [ ] **Sailing on the Whistling Man schooner in a sweater** — Ten guests, two hours, the lake runs ten degrees cooler than shore. *(things.json)*
 - [ ] **Watching the sunset from the Spirit of Ethan Allen** — The sunset dinner cruise is the version worth taking. *(things.json)*
-- [ ] **Spotting a moose on a city street** — It happens often enough to make the national travel press. *(archive:2026-07-03)*
+- [ ] **Spotting a moose on a city street** — Moose wander onto Burlington city streets now and then. *(archive:2026-07-03)*
 - [ ] **Watching the river of crows come in** — Winter evenings downtown, thousands of crows heading to roost. *(archive:2026-07-03)*
 - [ ] **Stacking pancake ice at Leddy Beach** — Rare pancake ice appeared at Leddy Beach in February 2025. *(archive:2025-02-07)*
 - [ ] **Taking the Penguin Plunge** — Into Lake Champlain in March for Special Olympics Vermont. *(archive:2026-03-23)*
 - [ ] **Shopping the Burton sample sale** — At Burton Snowboards HQ on Queen City Park Road. *(archive:2026-08-28)*
 - [ ] **Picking up litter on Green Up Day** — The statewide cleanup Saturday every May. *(archive:2026-05-01)*
 - [ ] **Eating sugar on snow at a sugarhouse** — Hot syrup on snow, spring parties at Palmer's Sugarhouse in Shelburne. *(archive:2026-04-10)*
-- [ ] **Walking into the Donahue Sea Caves over the ice** — Only reachable in deep winter, walking in over solid ice. Never alone. *(things.json)*
 - [ ] **Setting up a lawn chair at Camp Meade** — Free Sunday-evening music in Middlesex, kids running loose. *(things.json)*
 - [ ] **Counting the drawers on the World's Tallest Filing Cabinet** — Thirty-eight drawers stacked 38 feet high on Flynn Avenue; birds nest in the top ones. *(things.json)*
 - [ ] **Getting lost in Five Corners Antiques** — Enter curious, exit two hours later carrying a lamp. *(things.json)*
@@ -346,8 +342,8 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 
 - [ ] **Champ** — The lake monster. Barnum offered $50,000 for the hide in 1873; ECHO has an exhibit. *(history-facts.json)*
 - [ ] **The Burlington Breakwater** — A 19th-century timber-crib breakwater begun in 1836, on the National Register. *(history-facts.json)*
-- [ ] **The causeway** — The old railroad causeway running 3.5 miles into the lake toward South Hero. *(things.json)*
-- [ ] **The bike ferry** — The $4 seasonal ferry across the gap in the causeway. *(things.json)*
+- [ ] **The causeway** — The old railroad causeway running three miles into the lake toward South Hero. *(things.json)*
+- [ ] **The bike ferry** — The seasonal ferry across the gap in the causeway. *(things.json)*
 - [ ] **Valcour Island** — Where American and British fleets clashed in October 1776. *(history-facts.json)*
 - [ ] **A Great Lake for 18 days** — In March 1998 Lake Champlain was legally one of America's Great Lakes. *(history-facts.json)*
 - [ ] **107 miles long** — The lake's length; 400 feet at its deepest point. *(history-facts.json)*
@@ -356,7 +352,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **ECHO** — The lake-science museum at the foot of College Street, built where 83 fuel tanks once stood. *(walking-tour.json)*
 - [ ] **North Beach** — Burlington's most social beach, lifeguards, campground, at capacity by 11 AM in August. *(things.json)*
 - [ ] **Oakledge Park** — Red-rock swimming spots and the world's first fully ADA-accessible treehouse. *(things.json)*
-- [ ] **Red Rocks Park** — 70-foot cliffs over the broad lake in South Burlington; Permian-era rock. *(things.json)*
+- [ ] **Red Rocks Park** — 70-foot cliffs over the broad lake in South Burlington; Cambrian-era rock. *(things.json)*
 - [ ] **Sand Bar State Park** — The warmest, shallowest swimming on this side of the lake, in Milton. *(things.json)*
 - [ ] **Perkins Pier** — Sailboat masts in the foreground turn every sunset photo into a postcard. *(sunset-spots.json)*
 - [ ] **Burlington Bay Market** — Creemees near Perkins Pier, flavors rotating by the week. *(things.json)*
@@ -364,8 +360,8 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Dragon boat** — Twenty-person boats charging out of the sailing center. *(hobbies.json)*
 - [ ] **Wreck diving** — Eight 19th-century shipwrecks under mooring buoys, open to registered divers. *(hobbies.json)*
 - [ ] **The General Butler** — The 1876 canal schooner wrecked near the breakwater, a favorite dive site. *(history-facts.json)*
-- [ ] **The Vermont (steamboat)** — The world's second commercial steamboat, launched from Burlington in 1809. *(history-facts.json)*
-- [ ] **Vermont Lake Monsters** — Minor league baseball at Centennial Field; Champ is the mascot. *(things.json)*
+- [ ] **The Vermont (steamboat)** — The world's second commercial steamboat, launched from Burlington in 1808. *(history-facts.json)*
+- [ ] **Vermont Lake Monsters** — Burlington's summer collegiate baseball team, playing at Centennial Field. *(things.json)*
 - [ ] **Splash at the Boathouse** — Casual dock food at the Community Boathouse with the loosest dress code on the waterfront. *(things.json)*
 - [ ] **Shanty on the Shore** — The waterfront seafood institution with a deck over the water. *(things.json)*
 - [ ] **Texaco Beach** — The off-leash dog beach on the Greenway, named for the gas station that stood there. *(things.json)*
@@ -379,11 +375,10 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Isle La Motte fossil reef** — Roughly 480 million years old, lying in open pasture. *(hobbies.json)*
 - [ ] **South Hero** — The island at the far end of the causeway; Snow Farm Vineyard is reachable by bike. *(things.json)*
 - [ ] **Grand Isle** — Home of the 1783 Hyde Log Cabin, one of the oldest in the country. *(things.json)*
-- [ ] **The Donahue Sea Caves** — Reachable only in deep winter, walking in over solid ice. *(things.json)*
 - [ ] **Penguin Plunge** — The March jump into the lake for Special Olympics Vermont. *(archive:2026-03-23)*
 - [ ] **Burlington Surf Club** — Paddleboard and windsurf rentals at the bottom of Lakeside Avenue. *(things.json)*
 - [ ] **Whistling Man Schooner** — Two-hour evening sails, maximum ten guests, BYOB. *(things.json)*
-- [ ] **Lake Champlain Maritime Museum** — Three centuries of the lake's working life in Ferrisburgh; admission is free. *(things.json)*
+- [ ] **Lake Champlain Maritime Museum** — Three centuries of Lake Champlain's working life in Ferrisburgh. *(things.json)*
 - [ ] **Lumber port** — By the 1870s Burlington's waterfront was the third-largest lumber market in the world. *(history-facts.json)*
 - [ ] **Battery Park gunners** — Helped drive off a British squadron on the lake in August 1813. *(history-facts.json)*
 - [ ] **Pancake ice** — The rare stacked ice disks that showed up at Leddy Beach in February 2025. *(archive:2025-02-07)*
@@ -436,7 +431,7 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Shelburne Museum** — Thirty-nine buildings and a beached steamboat, seven miles south. *(things.json)*
 - [ ] **Vermont Teddy Bear** — The Shelburne factory tour with a Bear Hospital. *(things.json)*
 - [ ] **Ben & Jerry's factory tour** — Waterbury, with the Flavor Graveyard. *(things.json)*
-- [ ] **The Lake Monsters** — Burlington's minor league baseball team. *(things.json)*
+- [ ] **The Lake Monsters** — Burlington's summer collegiate baseball team, playing at Centennial Field. *(things.json)*
 - [ ] **The Catamounts** — UVM's teams. Hockey at the Gut. *(things.json)*
 - [ ] **Snowboarding** — Burton is headquartered in Burlington. *(archive:2026-08-28)*
 - [ ] **A covered bridge** — Vermont has 100 historic ones. *(archive:2026-06-29)*
@@ -457,3 +452,97 @@ the gravy fries stay in: the closure is a verified fact, not an inference.
 - [ ] **Vermont Green FC** — Summer soccer at Virtue Field, back-to-back national champions. *(archive:2026-08-03)*
 - [ ] **The Intervale** — 360 acres of organic farms and trails in the Winooski floodplain. *(things.json)*
 - [ ] **Art Hop** — Three days each September when South End studios open their doors. *(things.json)*
+
+
+## Content pass — 2026-09-20
+
+- Replaced reviewer attribution with neutral editorial wording.
+- Enforced the quarantine across every build input, including brand variants. Quarantined titles cannot return through another collection or a bulk import.
+- Corrected Switchback to 2002; Lake Monsters to summer collegiate baseball at Centennial Field; Red Rocks to Cambrian; Al's French Frys spelling; Pizza 44 to Park Street; the steamboat Vermont to an 1808 launch; causeway length to three miles; and moose sightings to now and then. Removed the ferry fare, museum admission claim, and uninterrupted-operation claim for the Flynn. Corrected hints are retained in publication metadata as well as the source snapshot.
+- Removed all 36 camping-expansion cards from publication. The checkout contained 36, rather than the audit's estimated 39; no existing theme provided a good home for the full set.
+- Kept only food and drink prompts from the sugaring and market expansions. Removed raw produce, equipment, and unrelated props from the food collection.
+- Restricted imported place cards to canonical answers present in the checked source snapshot. Removed out-of-city places from the downtown collection and unsupported map-only park entries. Retained credited photo cards and existing photo assets.
+- Reduced the town expansion from 90 names in this checkout to 20 nearby or widely recognizable towns.
+- Removed Bristol Falls, Bolton Potholes, and sea-cave-on-ice prompts, including the source actions that previously received generic display rewrites.
+- Wrote the cross-deck dedupe pass but left it off by default; see the note below. Publication now has 3,753 entries. All 44 collection IDs, 38 photo cards, and 36 challenge references remain.
+- Stored the publication policy in `data/decks.json`. The build now writes the fully organized catalog, checks that prepared photos exist without changing them, and regenerates the inventory. The checked six-deck source snapshot contains 350 cards, down from 354.
+
+### Published card counts
+
+| Deck | Before | After |
+|---|---:|---:|
+| `warmup` | 75 | 75 |
+| `home-life` | 90 | 90 |
+| `movies` | 85 | 85 |
+| `act-general` | 70 | 70 |
+| `animals` | 90 | 90 |
+| `school-days` | 129 | 129 |
+| `food` | 85 | 85 |
+| `dress-up` | 90 | 90 |
+| `road-trip` | 90 | 90 |
+| `hobbies` | 90 | 90 |
+| `feelings` | 90 | 90 |
+| `songs` | 75 | 75 |
+| `nineties` | 80 | 80 |
+| `kids` | 75 | 75 |
+| `everyday` | 65 | 65 |
+| `jobs` | 70 | 70 |
+| `sayings` | 60 | 60 |
+| `sport` | 80 | 80 |
+| `nature` | 80 | 80 |
+| `tv` | 75 | 75 |
+| `music` | 85 | 85 |
+| `characters` | 90 | 90 |
+| `games` | 80 | 80 |
+| `travel` | 70 | 70 |
+| `science` | 75 | 75 |
+| `holidays` | 70 | 70 |
+| `wedding` | 76 | 76 |
+| `airport` | 76 | 76 |
+| `office` | 76 | 76 |
+| `kitchen` | 76 | 76 |
+| `superpowers` | 76 | 76 |
+| `space` | 76 | 76 |
+| `pet-chaos` | 112 | 112 |
+| `toolbox` | 76 | 76 |
+| `fairytales` | 76 | 76 |
+| `tiny-disasters` | 76 | 76 |
+| `church` | 252 | 148 |
+| `eat` | 176 | 96 |
+| `vermont` | 186 | 113 |
+| `lake` | 111 | 51 |
+| `act` | 99 | 96 |
+| `seasons` | 136 | 134 |
+| `only-here` | 167 | 167 |
+| `photos` | 38 | 38 |
+| **Total** | **4,075** | **3,753** |
+
+
+### Businesses checked for closure — 2026-09-20
+
+The audit flagged four places as closed and asked for them to be cut. Each was checked
+live on 2026-09-20. **All four are open, so nothing was cut.**
+
+| Business | Status | Checked against |
+|---|---|---|
+| The Other Place, 4 N Winooski Ave | Open | Yelp listing active (updated May 2026), hours Mon–Fri 3pm–2am / Sat–Sun 12:30pm–2am; Seven Days location page live |
+| Three Needs, 185 Pearl St | Open | Yelp updated May 2026, 128 reviews, 4pm–2am daily; threeneeds.net live |
+| Misery Loves Co., 46 Main St, Winooski | Open | Yelp updated September 2026, 357 reviews; miserylovescovt.com live. Only closure on record is a month-long 2022 renovation |
+| Vermont Pub & Brewery, 144 College St | Open | Yelp updated September 2026, 667 reviews; vermontbrewery.com live; Lake Champlain Chamber listing active |
+
+Seven Days' 2026 closure coverage was also swept: the Burlington-area closures on record
+this year are Feldman's Bagels, Drink on St. Paul Street, and Bleu Northeast Kitchen. None
+of the four appears.
+
+One real correction came out of the check: Three Needs no longer brews on site — its beer is
+contract-brewed by Queen City Brewery — so the card no longer calls it a brewpub.
+
+### On the cross-deck dedupe
+
+The audit asked for the 238 duplicate answers to be collapsed. That pass is written and
+lives behind `publication.crossDeckDedupe` in `data/decks.json`, but it ships **off**, because
+the engine already solves the problem: `eligibleCards()` runs `uniqueCards()` over the selected
+decks, so a repeated answer never reaches a player no matter how many decks are picked.
+Stripping the duplicate from the broader deck only shrinks that deck when it is played alone —
+with the pass on, `warmup`, the deck a new player starts with, fell from 75 cards to 52, and
+`kids` from 75 to 49. Flip the flag to re-enable it.
