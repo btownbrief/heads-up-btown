@@ -176,6 +176,19 @@ export function createRound(queue, options, now) {
     reason: null,
   };
 }
+// Round lengths offered in setup. Challenges keep their own fixed clocks.
+export const ROUND_LENGTHS = [15, 30, 45, 60, 90, 120, 180, 300];
+export const durationLabel = (seconds) =>
+  seconds >= 120 && seconds % 60 === 0
+    ? `${seconds / 60} minutes`
+    : seconds > 120
+      ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+      : `${seconds} seconds`;
+// Rounds longer than two minutes count down as m:ss; shorter ones stay in seconds.
+export const clockLabel = (seconds, baseSeconds) =>
+  baseSeconds > 120
+    ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+    : String(seconds);
 export function secondsLeft(s, now) {
   return Math.max(0, Math.ceil((s.deadline - (s.pausedAt ?? now)) / 1000));
 }
