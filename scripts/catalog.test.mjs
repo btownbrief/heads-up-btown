@@ -65,3 +65,23 @@ test('short familiar words survive while acronym-only insider prompts are gone',
   for(const word of ['Dog','Cat','Sun']) assert(pool.some(c=>normalize(c.t)===normalize(word)),word);
   for(const word of ['UVM','The OP','BCA Center','BTV Airport','EVE','U2','DNA']) assert(!pool.some(c=>c.t===word),word);
 });
+test('the second easing pass keeps over-specific answers out of Familiar without removing cards', async () => {
+  const { deepCuts, easyWins } = await import('../dist/js/catalog.js');
+  const texts=new Set(decks.flatMap(d=>d.cards.map(c=>c.t)));
+  const bare=entry=>texts.has(entry)?entry:entry.slice(entry.indexOf('/')+1);
+  for(const entry of [...deepCuts,...easyWins]) assert(texts.has(bare(entry)),`stale grade entry: ${entry}`);
+  assert(![...deepCuts].some(entry=>easyWins.has(entry)));
+  const pool=eligibleCards(decks,decks.map(d=>d.id),{difficulty:'familiar'});
+  for(const answer of ['A sock sliding into your shoe','Suitcase wheels','Four Quarters Brewing','A trail dog waiting ahead','Leddy Park Arena (Gordon H. Paquette Ice Arena)','Centrifugal force'])
+    assert(!pool.some(c=>c.t===answer),answer);
+  for(const answer of ['Pizza','Church Street Marketplace','Creemee','The Flynn','Pikachu'])
+    assert(pool.some(c=>c.t===answer),answer);
+  assert(eligibleCards(decks,['eat'],{difficulty:'familiar'}).some(c=>c.t==="Ben & Jerry's"));
+  assert.equal(decks.reduce((n,d)=>n+d.cards.length,0),4075,'grading must not drop cards');
+  for(const deck of decks) assert(deck.cards.filter(c=>c.d<=2).length >= (deck.photo||deck.id==='photos'?12:30),deck.id);
+  const school=decks.find(d=>d.id==='school-days').cards.find(c=>c.t==='Catamounts');
+  const vermont=decks.find(d=>d.id==='vermont').cards.find(c=>c.t==='Catamounts');
+  assert.equal(school.d,3);assert.equal(vermont.d,1);
+  const renamed=decks.find(d=>d.id==='eat').cards.find(c=>c.t==="Ben & Jerry's");
+  assert.equal(cardKey(renamed),cardKey({t:"Ben & Jerry's (Church Street Scoop Shop)"}));
+});

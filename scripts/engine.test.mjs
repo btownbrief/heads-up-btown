@@ -260,3 +260,15 @@ test("custom import reports duplicate forbidden clues and extra columns", () => 
     /use answer/,
   );
 });
+
+test("round lengths run from 15 seconds to 5 minutes with readable labels and clocks", async () => {
+  const { ROUND_LENGTHS, durationLabel, clockLabel } = await import("../dist/js/engine.js");
+  assert.deepEqual(ROUND_LENGTHS, [15, 30, 45, 60, 90, 120, 180, 300]);
+  assert.deepEqual(ROUND_LENGTHS.map(durationLabel), ["15 seconds", "30 seconds", "45 seconds", "60 seconds", "90 seconds", "2 minutes", "3 minutes", "5 minutes"]);
+  assert.equal(durationLabel(75), "75 seconds");
+  assert.equal(durationLabel(195), "3:15");
+  assert.equal(clockLabel(120, 120), "120");
+  assert.equal(clockLabel(59, 60), "59");
+  assert.equal(clockLabel(300, 300), "5:00");
+  assert.equal(clockLabel(9, 180), "0:09");
+});

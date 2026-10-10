@@ -76,3 +76,15 @@ In the in-app browser at 390 × 844:
 - Saved all 61 offline files, stopped the isolated server, confirmed connection refusal, and reloaded successfully. Played and scored another round with the server still off.
 - Opened the migrated Welcome to Btown challenge offline, scored three, finalized one star, and reloaded. The best score and star persisted, the next level unlocked, and later levels stayed locked.
 - Confirmed no horizontal overflow and empty browser error logs. Physical tilt acceptance remains separate from these browser checks.
+
+## Second easing pass — October 10, 2026
+
+Familiar now includes 2,120 distinct answers (was 2,872); Hard holds 1,686. Entry and canonical-answer counts are unchanged at 4,075 and 3,786. All 34 tests pass, including a new test that every grade entry matches a live card, no deck falls below 30 Familiar cards (12 for photos), no card was dropped, and scoped grading and renamed history keys behave. Both validators, the inventory script, and JavaScript syntax checks pass. All 36 challenges still have at least their gold target in eligible cards.
+
+In headless Chromium at 390 × 844, a 30-second Icebreaker tap round ran from setup (Familiar preselected, 70 fresh answers) through countdown, eight cards, time up, and the recap with sharing. Every card shown was Easy or Medium, with no horizontal overflow and no console errors. Tilt was not exercised; physical-phone acceptance remains separate.
+
+## More round lengths — October 10, 2026
+
+Setup now offers 15, 30, 45, 60, and 90 seconds and 2, 3, and 5 minutes. Rounds longer than two minutes show the clock as m:ss on the play screen, pause screen, and room display; shorter rounds are unchanged. Lightning finish uses the shorter of 30 seconds and the chosen length. Challenge clocks stay fixed. All 35 tests pass, including a new test for the lengths, labels, and clock format.
+
+In headless Chromium, a 5-minute round at 390 × 844 and a 3-minute round at 320 × 568 showed "4:59" and "2:59" without overflow, and paused as "4:58 left". A 15-second round ran through countdown, a correct answer, pause, resume, time up, and recap. No console errors. Tilt was not exercised.

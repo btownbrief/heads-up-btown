@@ -37,3 +37,9 @@ The extension adds 20 authored decks (10 regional and 10 general), bringing the 
 ## Everyday-card refresh
 
 Player feedback favored familiar prompts over insider abbreviations and exact phrases. Familiar now excludes difficulty 3 by default, while harder choices remain explicit. Ninety-four displayed entries have clearer wording and stable freshness keys. The library adds 940 authored everyday entries and consolidates the local shelf. Existing group histories are canonicalized without clearing them; saved rounds retain their queue, and merged deck IDs resolve for selections and all 36 levels.
+
+## Second easing pass
+
+Players still found Familiar answers too specific and rounds stalled on guessing. The cause was wording, not subject matter: phrases such as "A sock sliding into your shoe", component-level items such as "Suitcase wheels", and lesser-known venue names sat in the Easy and Medium bands. `deepCuts` in `catalog.js` now grades 825 of those wordings Hard, and `easyWins` brings 72 well-known answers (Pikachu, The Godfather, Antarctica, Cabot Creamery) into Medium. Entries can be scoped to one source deck, so Catamounts leaves School days but stays in Vermont favorites. Two long venue names display as the short familiar name with their original history key.
+
+Only grades changed. All 4,075 entries, 3,786 canonical answers, group histories, and challenge references are intact, and every deep cut remains playable under All cards, Hard, or Easy to hard. Familiar is the unchanged default and now holds 2,120 answers; every text deck keeps at least 30 Familiar cards and the photo deck keeps 13.
